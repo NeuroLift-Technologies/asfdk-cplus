@@ -67,7 +67,7 @@ A `.toi` document is a JSON object with two groups of keys:
 
 ### 2.5 Tier Precedence
 
-```
+```text
 personal > community > project > platform defaults
 ```
 
@@ -173,7 +173,7 @@ The loaded document's own `$tier` MUST equal the source's declared `tier`; a mis
 | Field | Values | Default | Meaning |
 |-------|--------|---------|---------|
 | `mode` | `advisory`, `enforced`, `strict` | `enforced` | Strictness of honoring. `strict` additionally refuses to serve the policy to an agent not declared in `agents`. |
-| `on_conflict` | `highest-tier-wins`, `reject`, `escalate` | `highest-tier-wins` | Disposition of a **same-tier** disagreement. `strict` additionally refuses to serve the policy to an agent not declared in `agents`. |
+| `on_conflict` | `highest-tier-wins`, `reject`, `escalate` | `highest-tier-wins` | Disposition of a **same-tier** disagreement (Section 6). |
 | `on_unsupported` | `ignore`, `degrade`, `reject` | `degrade` | Disposition of a preference no agent can satisfy. |
 | `audit` | boolean | `true` | Whether honoring is recorded to an audit trail. |
 
@@ -198,7 +198,7 @@ The loaded document's own `$tier` MUST equal the source's declared `tier`; a mis
 Key types:
 
 - `agents` array entry: `{ id: string; role?: string; modalities?: string[]; affordances?: string[] }`
-- `enforcement`: `{ mode: enum; on_conflict: enum; on_unsupported: boolean; audit: boolean }`
+- `enforcement`: `{ mode: enum; on_conflict: enum; on_unsupported: enum; audit: boolean }`
 - `enum values`:
   - `mode`: `advisory | enforced | strict`
   - `on_conflict`: `highest-tier-wins | reject | escalate`
@@ -210,7 +210,7 @@ Key types:
 
 ### 4.1 Package Location
 
-- **Original:** `/home/joshd/Desktop/nlt-repos/asfdk/legacy/rrt-advocate/`
+- **Original:** `asfdk/legacy/rrt-advocate/`
 - **Language:** Python (primary), with TypeScript wrapper under `packages/asfdk/node_modules/@neurolift-technologies/rrt-advocate/`
 - **Status:** Experimental, stubbed intervention layers
 
@@ -262,7 +262,7 @@ The RRT engine receives emotional state from Sleepwalker protocol. Key flags:
 
 ### 4.6 RRT Advocate Integration Flow (from `foundation.ts`)
 
-```
+```text
 EMOTIONAL_ASSESSMENT interaction → Sleepwalker.detectEmotionalState()
    → if requiresRrtaHandoff(state) then
        → RRTAdvocate.assess(userId, input, channel)
@@ -271,7 +271,7 @@ EMOTIONAL_ASSESSMENT interaction → Sleepwalker.detectEmotionalState()
 
 ### 4.6 Security Warning (from `packages/asfdk/src/integration/rrt.ts`)
 
-```
+```text
 ⚠️ PROTOTYPE — NOT A SAFETY SYSTEM.
 This adapter wraps an experimental crisis-detection library with stubbed
 intervention layers. It is not medical advice, not a crisis service, performs
@@ -333,8 +333,8 @@ Never rely on it as the sole safety mechanism.
 
 ### 5.6 RRT Handoff Condition (from `foundation.ts`)
 
-```
-sleepwalker.requiresRrtaHoff(state) → true when:
+```text
+sleepwalker.requiresRrtaHandoff(state) → true when:
   - state.explicitSuicidalIdeation === true
   OR state.selfHarmIndicators === true
   OR state.inabilityToEnsureSafety === true
@@ -350,9 +350,9 @@ sleepwalker.requiresRrtaHoff(state) → true when:
 
 ## 6. Integration Architecture (from Foundation)
 
-### 6.1 Process Flow (` NeuroLiftFoundation.processInteraction()`)
+### 6.1 Process Flow (`NeuroLiftFoundation.processInteraction()`)
 
-```
+```text
 UserInteraction → normalizeChannel → determine trusted flag
 
 IF interactionType === PREFERENCE_UPDATE AND active.toi:
@@ -413,7 +413,7 @@ This document provides the complete reference for C++ porting work in Phases 2�
 | Task | Owner | Status |
 |------|-------|--------|
 | Create package directory structure (TOI, OTOI, RRT, Sleepwalker) | — | ⬜ Pending |
-| Define core C++ types mapping TOI/OTOE/RRT/Sleepwalker schemas | — | ⬜ Pending |
+|| Define core C++ types mapping TOI/OTOI/RRT/Sleepwalker schemas | — | ⬜ Pending |
 | Implement core logic in C++ (validators, parsers, assessment engines) | — | ⬜ Pending |
 | Write unit tests (Catch2/GoogleTest) | — | ⬜ Pending |
 | Create CMake build configuration | — | ⬜ Pending |
