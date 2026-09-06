@@ -53,6 +53,6 @@ This file registry tracks all governance-related files in the `asfdk-cplus` repo
 
 | Agent | Session | Date | Status |
 |---|---|---|---|
-| Hermes / desktop (Codex CLI) | phase5-sleepwalker-cplus | 2026-09-06 | ✅ Active |
+| pool / desktop (Codex CLI) | phase5-sleepwalker-cplus | 2026-09-06 | ✅ Active |
 
 *Last updated: 2026-09-06*
