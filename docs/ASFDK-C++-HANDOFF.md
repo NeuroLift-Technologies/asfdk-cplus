@@ -52,13 +52,11 @@ The C++ architecture should preserve this separation.
 ```text
                     ASFDK-C++
                        │
-       ┌───────────────┼────────────────┐
-       │               │                │
-   TOI-C++          OTOI-C++       RRT Advocate-C++
-       │               │                │
-       └───────────────┼────────────────┘
-                       │
-                Sleepwalker-C++
+       ┌───────────────┼────────────────┬────────────────┐
+       │               │                │                │
+   TOI-C++          OTOI-C++       RRT Advocate-C++   Sleepwalker-C++
+       │               │                │                │
+       └───────────────┴────────────────┴────────────────┘
                        │
                 ASFDK Composition
                        │
