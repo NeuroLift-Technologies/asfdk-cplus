@@ -1,5 +1,5 @@
 #!/bin/bash
-# validate-governance.sh — ASFDK C# Governance Validation
+# validate-governance.sh — ASFDK C++ Governance Validation
 # Run: bash .nltotoi/scripts/validate-governance.sh
 # Returns: 0 if all checks pass, 1 if any fail
 
@@ -24,7 +24,7 @@ check() {
     fi
 }
 
-echo "=== ASFDK C# Governance Validation ==="
+echo "=== ASFDK C++ Governance Validation ==="
 echo "Document ID: $OTOI_VERSION"
 echo ""
 
