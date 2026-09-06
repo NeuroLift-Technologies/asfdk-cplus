@@ -82,7 +82,7 @@
 
 ### Thread: phase-5-sleepwalker-cplus
 **Status:** resolved
-**Owner:** Hermes / desktop
+**Owner:** pool / desktop
 **Started:** 2026-09-06
 **Last updated:** 2026-09-06
 **Summary:** Phase 5 — Sleepwalker Protocol C++ port COMPLETE. Created full packages/sleepwalker/ package at packages/sleepwalker/ with:
@@ -101,7 +101,7 @@
 
 **Compilation verified:** g++ 15.2.0, C++20, -Wall -Wextra — no warnings in project code. Full test suite: 56 test cases, 189 assertions, all passing.
 
-**Governance compliance:** 22/22 validation checks passing. Self-registered per OTOI §3 (docs/agent-log/registrations/2026-09-06-hermes-phase5.json). Handoff record written (docs/agent-log/handoffs/2026-09-06-phase5-sleepwalker.json).
+**Governance compliance:** 22/22 validation checks passing. Self-registered per OTOI §3 (docs/agent-log/registrations/2026-09-06-pool-phase5.json). Handoff record written (docs/agent-log/handoffs/2026-09-06-phase5-sleepwalker.json).
 
 **Blockers:** None
 
