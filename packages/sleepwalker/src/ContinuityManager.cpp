@@ -93,7 +93,11 @@ void ContinuityManager::saveSession(const std::string& userId, nlohmann::json se
     // Add timestamp (matching Python's datetime.now().isoformat())
     auto now = std::chrono::system_clock::now();
     auto nowTime = std::chrono::system_clock::to_time_t(now);
-    std::tm tm = *std::gmtime(&nowTime);
+    std::tm tm{};
+    if (gmtime_r(&nowTime, &tm) == nullptr) {
+        spdlog::error("Sleepwalker: Failed to convert current time to UTC for {}", userId);
+        return;
+    }
     std::ostringstream ss;
     ss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
     sessionData["timestamp"] = ss.str();
