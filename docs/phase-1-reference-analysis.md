@@ -227,13 +227,18 @@ Key types:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `crisisLevel` | `CrisisLevel` | One of: `GREEN`, `YELLOW`, `RED`, `BLACK` |
-| `safetyScore` | `float` | Safety score (0.0 = unsafe, 1.0 = fully safe) |
-| `interventions` | `string[]` | Recommended intervention actions |
-| `channel` | `Channel` | Provenance channel |
-| `trusted` | `boolean` | Whether the assessment is trusted |
-| `flagged` | `boolean` | Whether input was flagged by sanitization |
-| `flagReason` | `string` | Reason for flagging (if any) |
+| `timestamp` | `datetime` | Assessment timestamp |
+| `crisis_level` | `CrisisLevel` | One of: `GREEN`, `YELLOW`, `ORANGE`, `RED`, `BLACK` |
+| `primary_indicators` | `list[str]` | Primary crisis indicators |
+| `secondary_indicators` | `list[str]` | Secondary crisis indicators |
+| `confidence_score` | `float` | Aggregate confidence score (0.0 to 1.0) |
+| `estimated_duration` | `timedelta \| None` | Estimated crisis duration |
+| `recommended_interventions` | `list[str]` | Recommended intervention actions |
+| `escalation_threshold` | `float` | Threshold for escalation |
+| `user_safety_score` | `float` | User safety score (0.0 = unsafe, 1.0 = fully safe) |
+| `context_factors` | `dict[str, Any]` | Additional context (self_harm_risk, sentiment_trend, looping_detected, etc.) |
+
+**Note:** `channel`, `trusted`, `flagged`, `flagReason` are NOT part of `CrisisAssessment`. They are added by the foundation integration layer (`foundation.ts`) as provenance envelope fields.
 
 ### 4.4 `CrisisLevel` Enum
 
@@ -241,6 +246,7 @@ Key types:
 |-------|---------|
 | `GREEN` | No crisis detected |
 | `YELLOW` | Possible concern, mild indicators |
+| `ORANGE` | High concern, moderate indicators |
 | `RED` | Clear crisis signal |
 | `BLACK` | Emergency/critical crisis |
 
@@ -263,7 +269,7 @@ EMOTIONAL_ASSESSMENT interaction → Sleepwalker.detectEmotionalState()
        → crisisLevel determines gateUp = true/false
 ```
 
-### 4.7 Security Warning (from rrt.ts)
+### 4.6 Security Warning (from `packages/asfdk/src/integration/rrt.ts`)
 
 ```
 ⚠️ PROTOTYPE — NOT A SAFETY SYSTEM.
@@ -296,13 +302,16 @@ Never rely on it as the sole safety mechanism.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `explicitSuicidalIdeation` | boolean | Explicit statement of suicidal intent |
-| `selfHarmIndicators` | boolean | Self-harm signals detected |
-| `inabilityToEnsureSafety` | boolean | User cannot ensure own safety |
-| `channel` | `Channel` | Provenance channel |
-| `trusted` | boolean | Whether the assessment is trusted |
-| `flagged` | boolean | Whether input was flagged by sanitization |
-| `flagReason` | string | Reason for flagging (if any) |
+| `stateType` | `string` | Emotional state classification (e.g., `dissociation`, `numbing`, `avoidance`, `detachment`, `neutral`) |
+| `protective` | `boolean` | Whether protective psychological state detected |
+| `requiresCheckIn` | `boolean` | Whether crisis check-in required |
+| `indicators` | `object` | Nested indicator flags: `dissociation`, `numbing`, `avoidance`, `detachment`, `crisis.suicidalIdeation`, `crisis.selfHarm`, `crisis.safetyConcern` |
+| `confidence` | `number` | Confidence score (0.0 to 1.0) |
+| `explicitSuicidalIdeation` | `boolean` | Explicit statement of suicidal intent |
+| `selfHarmIndicators` | `boolean` | Self-harm signals detected |
+| `inabilityToEnsureSafety` | `boolean` | User cannot ensure own safety |
+
+**Note:** `channel`, `trusted`, `flagged`, `flagReason` are NOT part of `EmotionalState`. They are added by the foundation integration layer (`sleepwalker.ts`) as provenance envelope fields.
 
 ### 5.4 `Channel` Enum
 
@@ -310,6 +319,8 @@ Never rely on it as the sole safety mechanism.
 |-------|-------------|
 | `user_input` | Interaction arrived via user input (trusted) |
 | `model_output` | Interaction arrived via model output (untrusted) |
+| `tool_result` | Interaction arrived via tool result (untrusted) |
+| `system` | Interaction originated from system (untrusted) |
 | `unknown` | Channel could not be determined |
 
 ### 5.5 Emotional State Assessment Logic (from `sleepwalker.ts`)
@@ -348,8 +359,10 @@ IF interactionType === PREFERENCE_UPDATE AND active.toi:
   → validateTOI(data?.['toi']) → components.push('toi_otoi_framework')
 
 IF interactionType === EMOTIONAL_ASSESSMENT AND active.swp:
-  → detectEmotionalState(input, [], channel) → content.emotionalState
+  → detectEmotionalState(input, [], channel, userId) → content.emotionalState
+  → highSeverity = state.explicitSuicidalIdeation || state.selfHarmIndicators || state.inabilityToEnsureSafety
   → if requiresRrtaHandoff(state) AND active.rrt:
+       → gateUp = highSeverity
        → rrt.assess(userId, input, channel) → content.rrt
        → components.push('rrt_advocate')
   → components.push('sleepwalker_protocol')
