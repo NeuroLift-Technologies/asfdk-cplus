@@ -33,9 +33,9 @@ TEST_CASE("TOI: parse full document", "[toi]") {
     REQUIRE(doc.$id == "c2c496e4-f3e2-4a56-b33a-1234567890ab");
     REQUIRE(doc.cognitive_profile->self_described == "I like parallel work");
     REQUIRE(doc.cognitive_profile->thread_support == false); // default
-    REQUIRE(doc.privacy.retention == "user-controlled");
-    REQUIRE(doc.agency.task_initiation == "user-initiated");
-    REQUIRE(doc.communication.tone == "friendly");
+    REQUIRE(doc.privacy->retention == "user-controlled");
+    REQUIRE(doc.agency->task_initiation == "user-initiated");
+    REQUIRE(doc.communication->tone == toi::Tone::Friendly);
     REQUIRE(doc.ethical_pillars.size() == 1);
     REQUIRE(doc.ethical_pillars[0] == "privacy-by-default");
 }
@@ -48,19 +48,23 @@ TEST_CASE("TOI: validate minimal document", "[toi]") {
 
 TEST_CASE("TOI: validate invalid $toi version", "[toi]") {
     const std::string json = R"({"$toi":"2.0.0","$tier":"personal","identity":{"author":"anonymous"}})";
-    auto doc = toi::parseTOI(nlohmann::json::parse(json));
-    REQUIRE(toi::validateTOI(doc) == false);
+    // parseTOI throws on invalid version (defensive: version is a hard gate)
+    REQUIRE_THROWS_AS(toi::parseTOI(nlohmann::json::parse(json)), std::invalid_argument);
+    // safeParseTOI returns expected error without throwing
+    auto result = toi::safeParseTOI(nlohmann::json::parse(json));
+    REQUIRE(!result.has_value());
+    REQUIRE(result.error().code == toi::TOIError::Code::VersionMismatch);
 }
 
 TEST_CASE("TOI: validate missing identity.author", "[toi]") {
     const std::string json = R"({"$toi":"1.0.0","$tier":"personal})";
-    REQUIRE_THROW(toi::parseTOI(nlohmann::json::parse(json)));
+    REQUIRE_THROWS(toi::parseTOI(nlohmann::json::parse(json)));
 }
 
 TEST_CASE("TOI: tier precedence resolution", "[toi]") {
-    TOIDocument personal{"1.0.0", "personal", {}, {}, {}, {}, {}, {}, {}};
-    TOIDocument community{"1.0.0", "community", {}, {}, {}, {}, {}, {}, {}};
-    TOIDocument project{"1.0.0", "project", {}, {}, {}, {}, {}, {}, {}};
+    toi::TOIDocument personal; personal.$toi = "1.0.0"; personal.$tier = "personal"; personal.identity.author = "anonymous";
+    toi::TOIDocument community; community.$toi = "1.0.0"; community.$tier = "community"; community.identity.author = "bob";
+    toi::TOIDocument project; project.$toi = "1.0.0"; project.$tier = "project"; project.identity.author = "charlie";
 
     // personal should win over community over project
     auto resolved = toi::resolveTOI({personal, community, project});
