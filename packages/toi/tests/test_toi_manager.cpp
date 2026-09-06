@@ -35,7 +35,7 @@ TEST_CASE("TOI: parse full document", "[toi]") {
     REQUIRE(doc.cognitive_profile->thread_support == false); // default
     REQUIRE(doc.privacy->retention == "user-controlled");
     REQUIRE(doc.agency->task_initiation == "user-initiated");
-    REQUIRE(doc.communication->tone == "friendly");
+    REQUIRE(doc.communication->tone == toi::Tone::Friendly);
     REQUIRE(doc.ethical_pillars.size() == 1);
     REQUIRE(doc.ethical_pillars[0] == "privacy-by-default");
 }
@@ -48,8 +48,12 @@ TEST_CASE("TOI: validate minimal document", "[toi]") {
 
 TEST_CASE("TOI: validate invalid $toi version", "[toi]") {
     const std::string json = R"({"$toi":"2.0.0","$tier":"personal","identity":{"author":"anonymous"}})";
-    auto doc = toi::parseTOI(nlohmann::json::parse(json));
-    REQUIRE(toi::validateTOI(doc) == false);
+    // parseTOI throws on invalid version (defensive: version is a hard gate)
+    REQUIRE_THROWS_AS(toi::parseTOI(nlohmann::json::parse(json)), std::invalid_argument);
+    // safeParseTOI returns expected error without throwing
+    auto result = toi::safeParseTOI(nlohmann::json::parse(json));
+    REQUIRE(!result.has_value());
+    REQUIRE(result.error().code == toi::TOIError::Code::VersionMismatch);
 }
 
 TEST_CASE("TOI: validate missing identity.author", "[toi]") {
