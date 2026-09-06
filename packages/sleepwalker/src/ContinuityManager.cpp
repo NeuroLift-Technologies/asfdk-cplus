@@ -178,10 +178,14 @@ void ContinuityManager::updateBoundary(const std::string& userId,
     // Add boundary_updated timestamp
     auto now = std::chrono::system_clock::now();
     auto nowTime = std::chrono::system_clock::to_time_t(now);
-    std::tm tm = *std::gmtime(&nowTime);
-    std::ostringstream ss;
-    ss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
-    userData["boundary_updated"] = ss.str();
+    std::tm tm{};
+    if (gmtime_r(&nowTime, &tm) != nullptr) {
+        std::ostringstream ss;
+        ss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%SZ");
+        userData["boundary_updated"] = ss.str();
+    } else {
+        spdlog::error("Sleepwalker: Failed to generate UTC timestamp for boundary update");
+    }
 
     // Save updated data
     std::filesystem::path userFile = m_storagePath / (userId + ".json");
