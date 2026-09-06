@@ -12,7 +12,10 @@ CrisisIndicators CrisisEngine::detect(const std::string& message) {
 }
 
 CrisisAssessment CrisisEngine::assess(const std::string& message) {
-    auto indicators = detector_->detectCrisisIndicators(message);
+    // Use a fresh detector to avoid behavioral layer state pollution
+    // from prior detect() calls affecting sentiment trend classification
+    CrisisDetector freshDetector;
+    auto indicators = freshDetector.detectCrisisIndicators(message);
     return assessor_->assessCrisis(indicators);
 }
 

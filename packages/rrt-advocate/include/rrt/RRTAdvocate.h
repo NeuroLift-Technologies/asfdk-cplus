@@ -9,7 +9,7 @@ namespace rrt {
 
 class RRTAdvocate {
 public:
-    explicit RRTAdvocate(const std::string& userId);
+    RRTAdvocate(const std::string& userId = "anonymous");
     ~RRTAdvocate();
 
     // Crisis assessment
