@@ -8,8 +8,8 @@
 
 // tl::expected provides std::expected-compatible expected<T,E> for C++17/20
 // The DECISIONS.md (Section 2) specifies dual error handling:
-//   - Throwing variant: parseToi() throws on invalid document
-//   - Non-throwing variant: safeParseToi() returns std::expected<T,E>
+//   - Throwing variant: parseTOI() throws on invalid document
+//   - Non-throwing variant: safeParseTOI() returns tl::expected<T,E>
 // We use tl::expected as the C++17/20 backport for std::expected
 #include <tl/expected.hpp>
 
@@ -33,22 +33,14 @@ struct TOIError {
 
 // Parse a TOI document from a JSON object.
 // Throws std::invalid_argument on invalid document (per DECISIONS.md §2)
-// The throwing variant is the primary API; callers should use safeParseToi()
+// The throwing variant is the primary API; callers should use safeParseTOI()
 // for non-throwing error handling.
 TOIDocument parseTOI(const nlohmann::json& json);
 
-// Non-throwing variant: returns std::expected<TOIDocument, TOIError>
-// If the document is invalid, returns std::unexpected<TOIError>
+// Non-throwing variant: returns tl::expected<TOIDocument, TOIError>
+// If the document is invalid, returns tl::unexpected<TOIError>
 // This provides the dual API pattern specified in DECISIONS.md §2:
-```cpp
-// Throwing variant
-ToiDocument parseToi(const nlohmann::json& input);
-
-// Non-throwing variant
-std::expected<ToiDocument, ToiError> safeParseToi(const nlohmann::json& input);
-```
-
-TOIDocument safeParseTOI(const nlohmann::json& json);
+tl::expected<TOIDocument, TOIError> safeParseTOI(const nlohmann::json& json);
 
 // Validate a TOIDocument against the canonical schema.
 // Returns true if valid, false otherwise.
@@ -79,34 +71,6 @@ bool verifySignature(const std::string& canonicalBytes,
                      const nlohmann::json& signature,
                      const std::vector<uint8_t>& publicKey);
 
-// ============ Convenience functions for the dual API ============
 
-// Parse with automatic error conversion:
-// - If document is valid, returns TOIDocument
-// - If invalid, returns std::unexpected<TOIError>
-// This is the safeParseToi() implementation inline.
-inline std::expected<TOIDocument, TOIError> parseTOISafe(const nlohmann::json& json) {
-    try {
-        auto doc = ::toi::parseTOI(json);
-        return doc; // success: return the document
-    } catch (const std::invalid_argument& e) {
-        // Convert the exception to a TOIError
-        TOIError error;
-        error.code = TOIError::Code::UnknownError;
-        error.message = e.what();
-        return std::unexpected<TOIError>(error);
-    } catch (...) {
-        TOIError error;
-        error.code = TOIError::Code::UnknownError;
-        error.message = "Unknown exception during TOI parsing";
-        return std::unexpected<TOIError>(error);
-    }
-}
-
-// ============ Canonicalization support ============
-
-// Sort object keys by UTF-16 code units (JCS RFC 8785 compatible)
-// Implemented in TOITypes.cpp
-std::string canonicalize_impl(const std::string& json);
 
 } // namespace toi

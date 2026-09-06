@@ -5,11 +5,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find dependencies via vcpkg
-set(VPKG_DIR "/home/joshh/Documents/NLT/Engine/Plugins/Runtime/GeoReferencing/Source/ThirdParty/vcpkg-installed/overlay-x64-uwp")
-list(APPEND CMAKE_PREFIX_PATH "/home/joshh/Documents/NLT/Engine/Plugins/Runtime/GeoReferencing/Source/ThirdParty/vcpkg-installed/overlay-x64-uwp")
+set(VPKG_DIR "/home/joshd/Documents/NLT/Engine/Plugins/Runtime/GeoReferencing/Source/ThirdParty/vcpkg-installed/overlay-x64-uwp")
+list(APPEND CMAKE_PREFIX_PATH "/home/joshd/Documents/NLT/Engine/Plugins/Runtime/GeoReferencing/Source/ThirdParty/vcpkg-installed/overlay-x64-uwp")
 find_package(nlohmann_json 3.4.0 REQUIRED)
 find_package(Catch2 3.4.0 REQUIRED)
-find_package(spdlog 1.11.0 REQUIRED)
 find_package(tl_expected 2.0.0 REQUIRED)
 
 # TOI library
@@ -27,8 +26,6 @@ set_target_properties(toi-cplus PROPERTIES
 
 target_link_libraries(toi-cplus PRIVATE
     nlohmann_json::nlohmann_json
-    Catch2::Catch2
-    spdlog::spdlog
     tl_expected::tl_expected)
 
 # Include directories
@@ -37,4 +34,6 @@ target_include_directories(toi-cplus PUBLIC
 
 # Tests
 enable_testing()
-add_test(TOI test_toi_manager)
+add_executable(test_toi_manager tests/test_toi_manager.cpp)
+target_link_libraries(test_toi_manager PRIVATE toi-cplus Catch2::Catch2)
+add_test(NAME TOI COMMAND test_toi_manager)

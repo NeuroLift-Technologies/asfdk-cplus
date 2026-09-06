@@ -302,23 +302,41 @@ bool verifySignature(const std::string& canonicalBytes,
 }
 
 // Non-throwing variant: safeParseTOI
-// Returns std::expected<TOIDocument, TOIError>
+// Returns tl::expected<TOIDocument, TOIError>
 // On success: returns the parsed TOIDocument
-// On failure: returns std::unexpected<TOIError> with error details
-std::expected<TOIDocument, TOIError> safeParseTOI(const nlohmann::json& json) {
+// On failure: returns tl::unexpected<TOIError> with error details
+tl::expected<TOIDocument, TOIError> safeParseTOI(const nlohmann::json& json) {
     try {
         auto doc = ::toi::parseTOI(json);
         return doc; // success: return the document
     } catch (const std::invalid_argument& e) {
         TOIError error;
-        error.code = TOIError::Code::UnknownError;
+        const std::string msg = e.what();
+        // Map exception messages to specific error codes
+        if (msg.find("Unsupported TOI version") != std::string::npos) {
+                    error.code = TOIError::Code::VersionMismatch;
+        } else if (msg.find("$tier") != std::string::npos) {
+                    error.code = TOIError::Code::InvalidTier;
+        } else if (msg.find("identity.author") != std::string::npos) {
+                    error.code = TOIError::Code::MissingAuthor;
+        } else if (msg.find("cognitive_profile") != std::string::npos) {
+                    error.code = TOIError::Code::InvalidCognitiveProfile;
+        } else if (msg.find("privacy") != std::string::npos) {
+                    error.code = TOIError::Code::InvalidPrivacy;
+        } else if (msg.find("agency") != std::string::npos) {
+                    error.code = TOIError::Code::InvalidAgency;
+        } else if (msg.find("communication") != std::string::npos) {
+                    error.code = TOIError::Code::InvalidCommunication;
+        } else {
+                    error.code = TOIError::Code::UnknownError;
+        }
         error.message = e.what();
-        return std::unexpected<TOIError>(error);
+        return tl::unexpected<TOIError>(error);
     } catch (...) {
         TOIError error;
         error.code = TOIError::Code::UnknownError;
         error.message = "Unknown exception during TOI parsing";
-        return std::unexpected<TOIError>(error);
+        return tl::unexpected<TOIError>(error);
     }
 }
 

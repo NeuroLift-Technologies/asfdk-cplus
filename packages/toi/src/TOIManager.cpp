@@ -1,9 +1,7 @@
-#pragma once
 
 #include "TermsOfInteraction.h"
 #include <string>
 #include <vector>
-#include <iostream>
 
 namespace toi {
 
@@ -18,7 +16,7 @@ public:
     /// @param jsonStr The JSON string representing a .toi document
     /// @return Parsed TOIDocument on success
     /// @throws std::invalid_argument if the document is invalid
-    TOIDocument parse(const std::string& jsonStr) {
+    TOIDocument parse(const std::string& jsonStr) const {
         auto j = nlohmann::json::parse(jsonStr);
         return parseTOI(j);
     }

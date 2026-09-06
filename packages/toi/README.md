@@ -50,7 +50,7 @@ personal > community > project > platform defaults
 ```bash
 # From repository root
 mkdir -p build && cd build
-cmake ../packages/toi -DVPKG_DIR=/home/joshd/Documents/NLT/Engine/Plugins/Runtime/GeoReferencing/Source/ThirdParty/vcpkg-installed/overlay-x64-uwp
+cmake ../packages/toi -DVPKG_DIR=${VPKG_DIR}
 cmake --build .
 # Run tests: ./tests/test_toi_manager
 ```
