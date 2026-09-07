@@ -182,3 +182,13 @@
 **Summary:** Reviewed two merged Phase 6 PRs (PR #18 umbrella; PR #19 OTOI manager state fix). Both merged to main. PR #18 introduced regressions: (1) Sleepwalker CMakeLists.txt hardcoded vcpkg path instead of VCPKG_ROOT per DECISIONS.md §4; (2) OTOI m_active is plain mutable bool (data race between safeHonor const-write and getStatus read); (3) m_mode never updated after safeHonor. Created branch phase-6-review-fixes with all three fixes. Handoff record written.
 **Blockers:** None
 **Next action:** Create PR from phase-6-review-fixes against main.
+
+---
+
+### Thread: phase-6-pr20-hermes-additional-review
+**Status:** completed
+**Owner:** Hermes / desktop
+**Started:** 2026-09-07
+**Summary:** Conducted additional review of PR #20 (phase-6-review-fixes). Two CodeRabbit comments remain unaddressed: (1) m_active declared as std::atomic<bool> without mutable qualifier — safeHonor() is const and calls .store() which is non-const, causing compilation failure; (2) m_mode write happens AFTER the release store on m_active, so the release/acquire pair does not synchronize m_mode reads in getStatus() — data race. Applied fixes: made m_active mutable, reordered writes (m_mode before release-store), changed getStatus() to acquire-load m_active. Committed to branch phase-6-hermes-review-fixes.
+**Blockers:** None
+**Next action:** Create PR from phase-6-hermes-review-fixes against phase-6-review-fixes (or main if PR #20 merges first).

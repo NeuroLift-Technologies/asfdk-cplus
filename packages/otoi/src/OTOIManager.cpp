@@ -564,10 +564,11 @@ std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const Otoi
     policy.agents = charter.agents;
 
     // Governance is engaged once a charter has been successfully honored.
-    // m_active is atomic (thread-safe); m_mode is mutable and updated on the
-    // success path so getStatus() reports the charter-resolved enforcement mode.
-    m_active.store(true, std::memory_order_release);
+    // m_mode is written BEFORE the release store to m_active so that the
+    // release/acquire pair establishes a happens-before relationship for m_mode
+    // reads in getStatus(). Reversing this order would race.
     m_mode = resolvedEnforcement.mode;
+    m_active.store(true, std::memory_order_release);
 
     return policy;
 }
@@ -589,7 +590,12 @@ nlohmann::json OTOIManager::propagate(const EffectivePolicy& policy, const std::
 }
 
 OTOIManager::Status OTOIManager::getStatus() const {
-    return {m_active, m_mode};
+    // Acquire-load m_active: synchronizes with the release-store in safeHonor().
+    // The prior write to m_mode (which happens-before the release store) is
+    // visible after this acquire load. This prevents the data race that
+    // CodeRabbit flagged under concurrent safeHonor() writes and getStatus() reads.
+    bool active = m_active.load(std::memory_order_acquire);
+    return {active, m_mode};
 }
 
 nlohmann::json OTOIManager::loadSource(const OtoiSource& source, const HonorOptions& options) const {
