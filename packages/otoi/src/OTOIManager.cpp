@@ -627,18 +627,33 @@ nlohmann::json OTOIManager::resolveDocuments(const std::vector<nlohmann::json>& 
         return nlohmann::json::object();
     }
 
-    // Sort documents by tier precedence: personal > community > project
+    // Sort documents by tier precedence: personal > community > project.
+    // Documents whose $tier cannot be resolved are dropped here (not silently
+    // merged with priority 0) so that detectConflicts and resolveDocuments
+    // agree: an unparseable $tier never participates in resolution.
     auto tierPriority = [](const nlohmann::json& doc) -> int {
         if (doc.contains("$tier") && doc["$tier"].is_string()) {
-            std::string tier = doc["$tier"].get<std::string>();
-            if (tier == "personal") return 3;
-            if (tier == "community") return 2;
-            if (tier == "project") return 1;
+            auto tier = tier_from_string(doc["$tier"].get<std::string>());
+            if (tier) {
+                switch (*tier) {
+                    case Tier::Personal: return 3;
+                    case Tier::Community: return 2;
+                    case Tier::Project: return 1;
+                }
+            }
         }
-        return 0;
+        return -1; // unresolvable — filtered out below
     };
 
-    std::vector<nlohmann::json> sorted = documents;
+    std::vector<nlohmann::json> sorted;
+    for (const auto& doc : documents) {
+        if (tierPriority(doc) >= 0) sorted.push_back(doc);
+    }
+
+    if (sorted.empty()) {
+        return nlohmann::json::object();
+    }
+
     std::sort(sorted.begin(), sorted.end(), [&](const nlohmann::json& a, const nlohmann::json& b) {
         return tierPriority(a) > tierPriority(b);
     });

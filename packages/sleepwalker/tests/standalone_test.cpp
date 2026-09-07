@@ -17,14 +17,22 @@
 
 // Local process-id helper — the ports have no cross-platform PID utility, and
 // tests only need a unique suffix for temp directories. POSIX unistd.h is
-// preferred; a fallback is used so the runner still compiles on non-POSix
-// hosts without relying on any transitive header.
-#if defined(__unix__) || defined(__unix) || defined(__APPLE__)
+// preferred; Windows uses _getpid(); other non-POSIX targets fall back to a
+// std::random_device-seeded counter so the runner compiles without relying on
+// any transitive header.
+#if defined(_WIN32)
+#include <process.h>
+static std::string localProcessId() { return std::to_string(static_cast<long>(::_getpid())); }
+#elif defined(__unix__) || defined(__unix) || defined(__APPLE__)
 #include <unistd.h>
-static std::string localProcessId() { return std::to_string(::getpid()); }
+static std::string localProcessId() { return std::to_string(static_cast<long>(::getpid())); }
 #else
+#include <random>
+#include <atomic>
 static std::string localProcessId() {
-    return std::to_string(static_cast<long>(std::rand()));
+    static std::atomic<long> counter{0};
+    static const long seed = static_cast<long>(std::random_device{}());
+    return std::to_string(seed + counter.fetch_add(1, std::memory_order_relaxed));
 }
 #endif
 #include "sleepwalker/StateDetector.h"
