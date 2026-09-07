@@ -131,11 +131,15 @@ private:
 
     // Current component state
     // m_active is atomically updated by safeHonor (const) to record that governance
-    // is engaged once a charter has been successfully honored. Uses atomic<bool>
-    // to prevent data races between concurrent safeHonor() writes and getStatus() reads.
-    std::atomic<bool> m_active{false};
+    // is engaged once a charter has been successfully honored. Uses mutable
+    // atomic<bool> because safeHonor() is const and calls .store() which requires
+    // a non-const method. Synchronized with m_mode via release/acquire ordering
+    // (see getStatus() and safeHonor() in OTOIManager.cpp).
+    mutable std::atomic<bool> m_active{false};
     // m_mode is mutable because safeHonor (const) updates it on the success path
-    // after resolving the charter enforcement policy.
+    // after resolving the charter enforcement policy. The write to m_mode happens-
+    // before the release store to m_active; reads in getStatus() use acquire-load
+    // on m_active to synchronize.
     mutable EnforcementMode m_mode = EnforcementMode::Enforced;
 };
 
