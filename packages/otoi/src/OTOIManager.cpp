@@ -564,10 +564,11 @@ std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const Otoi
     policy.agents = charter.agents;
 
     // Governance is engaged once a charter has been successfully honored.
-    // m_mode is written BEFORE the release store to m_active so that the
-    // release/acquire pair establishes a happens-before relationship for m_mode
-    // reads in getStatus(). Reversing this order would race.
-    m_mode = resolvedEnforcement.mode;
+    // Publish m_mode with a release store BEFORE signaling m_active, so that
+    // getStatus()'s acquire-load of m_active makes the m_mode write visible.
+    // This eliminates the data race between safeHonor() writes and getStatus()
+    // reads — both fields are now atomic with proper release/acquire ordering.
+    m_mode.store(resolvedEnforcement.mode, std::memory_order_relaxed);
     m_active.store(true, std::memory_order_release);
 
     return policy;
@@ -591,11 +592,14 @@ nlohmann::json OTOIManager::propagate(const EffectivePolicy& policy, const std::
 
 OTOIManager::Status OTOIManager::getStatus() const {
     // Acquire-load m_active: synchronizes with the release-store in safeHonor().
-    // The prior write to m_mode (which happens-before the release store) is
-    // visible after this acquire load. This prevents the data race that
-    // CodeRabbit flagged under concurrent safeHonor() writes and getStatus() reads.
+    // Because m_mode is also atomic and written before the release store on
+    // m_active, the acquire-load establishes a happens-before relationship
+    // that makes the m_mode value visible here. This eliminates the data race
+    // that CodeRabbit flagged under concurrent safeHonor() writes and
+    // getStatus() reads.
     bool active = m_active.load(std::memory_order_acquire);
-    return {active, m_mode};
+    EnforcementMode mode = m_mode.load(std::memory_order_relaxed);
+    return {active, mode};
 }
 
 nlohmann::json OTOIManager::loadSource(const OtoiSource& source, const HonorOptions& options) const {

@@ -130,17 +130,15 @@ private:
     bool isAgentDeclared(const OtoiCharter& charter, const std::string& agentId) const;
 
     // Current component state
-    // m_active is atomically updated by safeHonor (const) to record that governance
-    // is engaged once a charter has been successfully honored. Uses mutable
-    // atomic<bool> because safeHonor() is const and calls .store() which requires
-    // a non-const method. Synchronized with m_mode via release/acquire ordering
-    // (see getStatus() and safeHonor() in OTOIManager.cpp).
+    // Both m_active and m_mode are atomically updated by safeHonor() (const)
+    // to record governance engagement and the charter-resolved enforcement mode.
+    // Using std::atomic for both fields ensures safe concurrent access between
+    // safeHonor() writes (any thread) and getStatus() reads (const, any thread).
+    // The release store on m_active in safeHonor() synchronizes with the acquire
+    // load in getStatus(), establishing a proper happens-before relationship
+    // for m_mode reads as well.
     mutable std::atomic<bool> m_active{false};
-    // m_mode is mutable because safeHonor (const) updates it on the success path
-    // after resolving the charter enforcement policy. The write to m_mode happens-
-    // before the release store to m_active; reads in getStatus() use acquire-load
-    // on m_active to synchronize.
-    mutable EnforcementMode m_mode = EnforcementMode::Enforced;
+    mutable std::atomic<EnforcementMode> m_mode{EnforcementMode::Enforced};
 };
 
 // ============ Convenience Functions ============
