@@ -6,8 +6,8 @@
 
 This is the C/C++ port of the NeuroLift Technologies ASFDK (Solidarity Framework Development Kit), enabling governance-aware AI systems in the C and C++ ecosystems.
 
-**Document ID:** ORG-DEV-OTOI-1.0.3  
-**Governed by:** Solidarity Framework | HAIEF  
+**Document ID:** ORG-DEV-OTOI-1.0.3
+**Governed by:** Solidarity Framework | HAIEF
 **Related repositories:**
 - `NeuroLift-Technologies/asfdk` — Original ASFDK (Python/TypeScript)
 - `NeuroLift-Technologies/asfdk-kotlin` — Kotlin port
@@ -32,6 +32,12 @@ asfdk-cplus/
 ├── SOPs/                      # Standard operating procedures
 ├── .github/workflows/         # CI governance validation
 │   └── validate-governance.yml
+├── packages/                  # Pillar packages
+│   ├── asfdk/                 # Phase 6: ASFDK umbrella (composition layer)
+│   ├── toi/                   # Phase 2: Terms of Interaction
+│   ├── otoi/                  # Phase 3: OTOI charter management
+│   ├── rrt-advocate/          # Phase 4: RRT Advocate
+│   └── sleepwalker/           # Phase 5: Sleepwalker Protocol
 └── .nltotoi/                  # Namespace structure
     ├── README.md
     ├── index/
@@ -49,6 +55,31 @@ bash .nltotoi/scripts/validate-governance.sh
 
 # All 22 checks pass when properly configured
 ```
+
+## Phase 6 — ASFDK Umbrella
+
+The ASFDK umbrella (`packages/asfdk/`) composes all four pillars into a single unified C++23 interface.
+
+**Build:**
+```sh
+cmake -B build
+cmake --build build
+ctest --test-dir build
+```
+
+**Hermetic smoke test** (no cmake/Catch2 needed):
+```sh
+g++ -std=c++23 -I packages/asfdk/include -I packages/toi/include \
+    -I packages/otoi/include -I packages/rrt-advocate/include \
+    -I packages/sleepwalker/include -I packages/include \
+    packages/asfdk/tests/standalone_test.cpp \
+    packages/asfdk/src/ASFDK.cpp \
+    packages/toi/src/*.cpp packages/otoi/src/OTOIManager.cpp \
+    packages/rrt-advocate/src/*.cpp packages/sleepwalker/src/*.cpp \
+    -o /tmp/asfdk_test && /tmp/asfdk_test
+```
+
+All 37/37 checks pass, exit 0.
 
 ## Agent Registration
 
@@ -84,4 +115,4 @@ Expected output: `✅ Governance validation PASSED — all 22 checks OK`
 
 ## License
 
-Internal use only — NeuroLift Technologies organization.# asfdk-cplus
+Internal use only — NeuroLift Technologies organization.
