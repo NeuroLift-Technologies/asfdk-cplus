@@ -47,6 +47,23 @@ asfdk-cplus/
         └── validate-governance.sh
 ```
 
+## Build
+
+This system does not have cmake installed. Use the hermetic g++ build instead:
+
+```sh
+# Hermetic build (no cmake needed) — g++ 15.2.0 is preinstalled
+g++ -std=c++23 -I packages/asfdk/include -I packages/toi/include \
+    -I packages/otoi/include -I packages/rrt-advocate/include \
+    -I packages/sleepwalker/include -I packages/include \
+    packages/asfdk/tests/standalone_test.cpp packages/asfdk/src/ASFDK.cpp \
+    packages/toi/src/TermsOfInteraction.cpp packages/otoi/src/OTOIManager.cpp \
+    packages/rrt-advocate/src/*.cpp packages/sleepwalker/src/*.cpp \
+    -o /tmp/asfdk_test && /tmp/asfdk_test
+```
+
+All 37/37 checks pass, exit 0.
+
 ## Quick Start
 
 ```bash
@@ -60,26 +77,26 @@ bash .nltotoi/scripts/validate-governance.sh
 
 The ASFDK umbrella (`packages/asfdk/`) composes all four pillars into a single unified C++23 interface.
 
-**Build:**
-```sh
-cmake -B build
-cmake --build build
-ctest --test-dir build
+**Layout:**
+
+```
+packages/asfdk/
+├── include/asfdk/
+│   ├── ASFDK.h          # ASFDK class — all pillar surfaces + unified surface
+│   └── ASFDKTypes.h     # ProcessedInteraction, AssessmentResult, FoundationStatus, ASFDKError
+├── src/
+│   └── ASFDK.cpp        # delegation wiring + integration-layer logic
+├── tests/
+│   └── standalone_test.cpp
+└── README.md
 ```
 
-**Hermetic smoke test** (no cmake/Catch2 needed):
-```sh
-g++ -std=c++23 -I packages/asfdk/include -I packages/toi/include \
-    -I packages/otoi/include -I packages/rrt-advocate/include \
-    -I packages/sleepwalker/include -I packages/include \
-    packages/asfdk/tests/standalone_test.cpp \
-    packages/asfdk/src/ASFDK.cpp \
-    packages/toi/src/*.cpp packages/otoi/src/OTOIManager.cpp \
-    packages/rrt-advocate/src/*.cpp packages/sleepwalker/src/*.cpp \
-    -o /tmp/asfdk_test && /tmp/asfdk_test
-```
+**What the umbrella adds:**
 
-All 37/37 checks pass, exit 0.
+1. **D4 provenance envelope** (`process`) — normalises the interaction channel and marks the envelope `trusted` only for `user_input`.
+2. **Flagging** (`ProcessedInteraction`) — combines Sleepwalker protective state, check-in requirements, and crisis indicators into one `flagged` + `flag_reason` signal.
+3. **RRT handoff** (`assess`) — when Sleepwalker detects a state that requires RRT handoff, the umbrella invokes the RRT Advocate for crisis assessment.
+4. **Composite status** (`getStatus`) — folds TOI, OTOI mode, RRT monitoring, and Sleepwalker activeness into one `FoundationStatus` with an `overall` health string.
 
 ## Agent Registration
 
