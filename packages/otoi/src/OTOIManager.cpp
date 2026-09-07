@@ -563,6 +563,9 @@ std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const Otoi
     // Set agents
     policy.agents = charter.agents;
 
+    // Governance is engaged once a charter has been successfully honored.
+    m_active = true;
+
     return policy;
 }
 
