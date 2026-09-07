@@ -564,7 +564,10 @@ std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const Otoi
     policy.agents = charter.agents;
 
     // Governance is engaged once a charter has been successfully honored.
-    m_active = true;
+    // m_active is atomic (thread-safe); m_mode is mutable and updated on the
+    // success path so getStatus() reports the charter-resolved enforcement mode.
+    m_active.store(true, std::memory_order_release);
+    m_mode = resolvedEnforcement.mode;
 
     return policy;
 }

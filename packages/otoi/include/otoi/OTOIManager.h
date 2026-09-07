@@ -2,6 +2,7 @@
 
 #include "OTOITypes.h"
 #include <expected> // std::expected (C++23)
+#include <atomic>
 #include <nlohmann/json.hpp>
 
 namespace otoi {
@@ -129,10 +130,13 @@ private:
     bool isAgentDeclared(const OtoiCharter& charter, const std::string& agentId) const;
 
     // Current component state
-    // m_active is mutated by safeHonor (const) to record that governance is
-    // engaged once a charter has been successfully honored.
-    mutable bool m_active = false;
-    EnforcementMode m_mode = EnforcementMode::Enforced;
+    // m_active is atomically updated by safeHonor (const) to record that governance
+    // is engaged once a charter has been successfully honored. Uses atomic<bool>
+    // to prevent data races between concurrent safeHonor() writes and getStatus() reads.
+    std::atomic<bool> m_active{false};
+    // m_mode is mutable because safeHonor (const) updates it on the success path
+    // after resolving the charter enforcement policy.
+    mutable EnforcementMode m_mode = EnforcementMode::Enforced;
 };
 
 // ============ Convenience Functions ============
