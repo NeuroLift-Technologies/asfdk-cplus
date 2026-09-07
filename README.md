@@ -18,10 +18,13 @@ This is the C/C++ port of the NeuroLift Technologies ASFDK (Solidarity Framework
 
 ```
 asfdk-cplus/
+├── CMakeLists.txt              # Root CMake project (Phase 6 umbrella build)
+├── vcpkg.json                 # vcpkg dependency manifest (DECISIONS.md §4)
 ├── AGENTS.md                  # Agent registry (2 agents: governance + Unreal bridge)
 ├── CLAUDE.md                  # Agent session directives
 ├── NLT-DEV-OTOI.md            # Org-level governance contract
 ├── nltotoi.json               # Discovery manifest
+├── REVIEW.md                  # Canonical agent review format
 ├── templates/                 # OTOI Section 3 formats
 │   ├── agent-registration.json
 │   ├── handoff-record.json
@@ -77,6 +80,32 @@ bash .nltotoi/scripts/validate-governance.sh
 
 The ASFDK umbrella (`packages/asfdk/`) composes all four pillars into a single unified C++23 interface.
 
+**Build:**
+
+Prerequisites: [vcpkg](https://github.com/microsoft/vcpkg) installed and `VCPKG_ROOT` environment variable set.
+
+```sh
+# Configure (with vcpkg toolchain)
+cmake -B build -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+
+# Build
+cmake --build build
+
+# Test
+ctest --test-dir build
+```
+
+**Hermetic smoke test** (no cmake/Catch2 needed):
+
+```sh
+g++ -std=c++23 -I packages/asfdk/include -I packages/toi/include \
+    -I packages/otoi/include -I packages/rrt-advocate/include \
+    -I packages/sleepwalker/include -I packages/include \
+    packages/asfdk/tests/standalone_test.cpp \
+    packages/asfdk/src/ASFDK.cpp \
+    packages/toi/src/*.cpp packages/otoi/src/OTOIManager.cpp \
+    packages/rrt-advocate/src/*.cpp packages/sleepwalker/src/*.cpp \
+    -o /tmp/asfdk_test && /tmp/asfdk_test
 **Layout:**
 
 ```
