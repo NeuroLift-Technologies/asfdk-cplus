@@ -210,3 +210,13 @@
 **Summary:** CodeRabbit commented on PR #20 (phase-6-review-fixes) that reordering m_mode write before the release store on m_active is insufficient — m_mode is still a plain mutable EnforcementMode (non-atomic), so concurrent reads in getStatus() can still race. PR #21 (phase-6-hermes-review-fixes) applied the reordering but did NOT make m_mode atomic. Applied the proper fix in branch phase-6-hermes-atomic-mmode: made both m_active and m_mode std::atomic, with release-store on m_active and acquire-load in getStatus(). m_mode uses relaxed ordering on both store and load (it is synchronized by the m_active release/acquire pair). This fully eliminates the data race per C++11 memory model.
 **Blockers:** None
 **Next action:** Create PR from phase-6-hermes-atomic-mmode against phase-6-hermes-review-fixes.
+
+---
+
+### Thread: phase-6-root-cmake-build-fix
+**Status:** in_progress
+**Owner:** Hermes / desktop
+**Started:** 2026-09-07
+**Summary:** Addressing unmerged CodeRabbit review comment from PR #25 (merged) — repository lacks root `CMakeLists.txt` but README documents `cmake -B build` from repo root. `packages/asfdk/CMakeLists.txt` expects the four pillar targets to be defined by a top-level project. Also fixed hardcoded vcpkg path in `packages/toi/CMakeLists.txt` (same regression pattern as Sleepwalker — per DECISIONS.md §4, should use `$ENV{VCPKG_ROOT}`). Created root `CMakeLists.txt` with project definition, C++23 standard, vcpkg toolchain auto-detection, vendored fallback include path, and `add_subdirectory` for all pillar packages + asfdk umbrella. Updated README build instructions to include the `--toolchain-file` flag for vcpkg. Governance compliance: 22/22.
+**Blockers:** None
+**Next action:** Create PR for root CMakeLists.txt + TOI CMakeLists.txt fix + README update.
