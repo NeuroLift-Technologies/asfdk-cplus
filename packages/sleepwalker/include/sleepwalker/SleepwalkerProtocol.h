@@ -108,13 +108,16 @@ public:
     void maintainContinuity(const std::string& userId, nlohmann::json sessionData);
 
     /**
-     * Get the singleton instance's status (for foundation integration).
+     * Get SWP status (for foundation integration).
      * Mirrors get_status() in the Python/TypeScript integration layer.
      */
     static nlohmann::json getStatus();
 
     /**
-     * Reset a singleton instance. Call during shutdown to clear state.
+     * Reset SWP state. Call during shutdown to clear state.
+     * Note: SleepwalkerProtocol is NOT a singleton — each instance manages
+     * its own state. This method is provided for API parity with the reference.
+     * The integration layer should recreate the instance for a full reset.
      */
     static void reset();
 
@@ -124,6 +127,7 @@ private:
     ContinuityManager m_continuityManager;
     nlohmann::json m_userToi;
     std::string m_privacyMode;
+    std::shared_ptr<spdlog::logger> m_logger;
     bool m_loggingEnabled;
 
     /// Check if SWP is active in user's TOI (default: true)
