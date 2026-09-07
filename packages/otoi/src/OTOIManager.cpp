@@ -1,5 +1,6 @@
-#include "OTOIManager.h"
-#include "OTOITypes.h"
+#include "otoi/OTOIManager.h"
+#include "otoi/OTOITypes.h"
+#include <set>
 #include <stdexcept>
 #include <algorithm>
 #include <sstream>
@@ -18,22 +19,83 @@ std::expected<void, OtoiValidationError> OTOIValidator::validate(const OtoiChart
 
     // Validate identity if present
     if (charter.identity.has_value()) {
-        auto identityIssues = validateIdentity(*charter.identity);
+        auto identityIssues = validateIdentity(nlohmann::json(*charter.identity));
         issues.insert(issues.end(), identityIssues.begin(), identityIssues.end());
     }
 
-    // Validate agents array
-    auto agentIssues = validateAgents(charter.agents);
+    // Validate agents array (bridge typed agents to the JSON shape the
+    // section validators expect)
+    nlohmann::json agentsJson = nlohmann::json::array();
+    for (const auto& agent : charter.agents) {
+        nlohmann::json a{{"id", agent.id}};
+        if (agent.role.has_value()) a["role"] = *agent.role;
+        if (agent.modalities.has_value()) a["modalities"] = *agent.modalities;
+        if (agent.affordances.has_value()) a["affordances"] = *agent.affordances;
+        agentsJson.push_back(std::move(a));
+    }
+    auto agentIssues = validateAgents(agentsJson);
     issues.insert(issues.end(), agentIssues.begin(), agentIssues.end());
 
     // Validate enforcement policy if present
+    auto modeLabel = [](EnforcementMode m) {
+        switch (m) {
+            case EnforcementMode::Advisory: return "advisory";
+            case EnforcementMode::Enforced: return "enforced";
+            case EnforcementMode::Strict: return "strict";
+        }
+        return "enforced";
+    };
+    auto conflictLabel = [](ConflictStrategy s) {
+        switch (s) {
+            case ConflictStrategy::HighestTierWins: return "highest-tier-wins";
+            case ConflictStrategy::Reject: return "reject";
+            case ConflictStrategy::Escalate: return "escalate";
+        }
+        return "highest-tier-wins";
+    };
+    auto unsupportedLabel = [](UnsupportedStrategy s) {
+        switch (s) {
+            case UnsupportedStrategy::Ignore: return "ignore";
+            case UnsupportedStrategy::Degrade: return "degrade";
+            case UnsupportedStrategy::Reject: return "reject";
+        }
+        return "degrade";
+    };
     if (charter.enforcement.has_value()) {
-        auto enforcementIssues = validateEnforcement(*charter.enforcement);
+        nlohmann::json enforcementJson = nlohmann::json::object();
+        if (charter.enforcement->mode.has_value()) {
+            enforcementJson["mode"] = modeLabel(*charter.enforcement->mode);
+        }
+        if (charter.enforcement->on_conflict.has_value()) {
+            enforcementJson["on_conflict"] = conflictLabel(*charter.enforcement->on_conflict);
+        }
+        if (charter.enforcement->on_unsupported.has_value()) {
+            enforcementJson["on_unsupported"] = unsupportedLabel(*charter.enforcement->on_unsupported);
+        }
+        auto enforcementIssues = validateEnforcement(enforcementJson);
         issues.insert(issues.end(), enforcementIssues.begin(), enforcementIssues.end());
     }
 
     // Validate toi_sources array
-    auto sourceIssues = validateToiSources(charter.toi_sources);
+    auto tierLabel = [](Tier t) {
+        switch (t) {
+            case Tier::Personal: return "personal";
+            case Tier::Community: return "community";
+            case Tier::Project: return "project";
+        }
+        return "project";
+    };
+    nlohmann::json sourcesJson = nlohmann::json::array();
+    for (const auto& source : charter.toi_sources) {
+        nlohmann::json s{{"tier", tierLabel(source.tier)}};
+        if (source.uri.has_value()) {
+            s["uri"] = *source.uri;
+        } else if (source.inline_doc.has_value()) {
+            s["inline"] = *source.inline_doc;
+        }
+        sourcesJson.push_back(std::move(s));
+    }
+    auto sourceIssues = validateToiSources(sourcesJson);
     issues.insert(issues.end(), sourceIssues.begin(), sourceIssues.end());
 
     if (!issues.empty()) {
@@ -234,7 +296,9 @@ std::vector<PolicyConflict> OTOIValidator::detectConflicts(const std::vector<nlo
 
             if (values.size() > 1) {
                 PolicyConflict conflict;
-                conflict.tier = tier;
+                conflict.tier = tier == "personal" ? Tier::Personal
+                              : tier == "community" ? Tier::Community
+                              : Tier::Project;
                 conflict.path = path;
                 conflict.values = std::vector<std::string>(values.begin(), values.end());
                 conflicts.push_back(conflict);

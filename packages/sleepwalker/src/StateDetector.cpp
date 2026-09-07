@@ -9,7 +9,7 @@
  * Governed by: ORG-DEV-OTOI-1.0.3
  */
 
-#include "StateDetector.h"
+#include "sleepwalker/StateDetector.h"
 #include <algorithm>
 
 namespace sleepwalker {

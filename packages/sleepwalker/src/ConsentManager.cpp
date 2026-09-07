@@ -5,7 +5,7 @@
  * Governed by: ORG-DEV-OTOI-1.0.3
  */
 
-#include "ConsentManager.h"
+#include "sleepwalker/ConsentManager.h"
 #include <spdlog/spdlog.h>
 
 namespace sleepwalker {

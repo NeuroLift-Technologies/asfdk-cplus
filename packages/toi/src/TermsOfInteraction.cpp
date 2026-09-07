@@ -1,5 +1,5 @@
-#include "TermsOfInteraction.h"
-#include "TOITypes.h"
+#include "toi/TermsOfInteraction.h"
+#include "toi/TOITypes.h"
 #include <stdexcept>
 #include <algorithm>
 

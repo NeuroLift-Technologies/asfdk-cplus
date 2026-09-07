@@ -6,7 +6,7 @@
  * Governed by: ORG-DEV-OTOI-1.0.3
  */
 
-#include "SleepwalkerProtocol.h"
+#include "sleepwalker/SleepwalkerProtocol.h"
 #include <spdlog/spdlog.h>
 
 namespace sleepwalker {

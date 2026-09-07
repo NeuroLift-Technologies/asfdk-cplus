@@ -1,5 +1,5 @@
 
-#include "TermsOfInteraction.h"
+#include "toi/TermsOfInteraction.h"
 #include <string>
 #include <vector>
 

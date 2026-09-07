@@ -19,7 +19,6 @@ add_library(toi-cplus
     src/TOIManager.cpp
 )
 
-target_name(toi-cplus)
 set_target_properties(toi-cplus PROPERTIES
     CXX_STANDARD 20
     CXX_EXTENSIONS OFF)

@@ -145,3 +145,30 @@
 **Blockers:** None
 **Next action:** Proceed to Phase 6 — ASFDK-C++ Umbrella integration (requires Phases 2-5 interfaces)
 **Next action:** Proceed to Phase 4 — RRT Advocate C++ port (packages/rrt_advocate/ per PLAN.md Section 8). Consider creating a dedicated Phase 4 branch from current state.
+
+---
+
+### Thread: hermetic-build-fixes
+**Status:** resolved
+**Owner:** Cline / desktop
+**Started:** 2026-09-06
+**Last updated:** 2026-09-06
+**Summary:** Post-merge package build verification COMPLETE. All three pillar packages (toi, otoi, sleepwalker) now compile hermetically using only vendored headers and pass their standalone test suites (g++ 15.2.0; toi C++20, otoi C++23, sleepwalker C++20):
+- packages/sleepwalker/src/*.cpp — include paths qualified to <sleepwalker/X.h>, matching the toi/otoi namespaced-include convention and fixing consumer-facing header resolution
+- packages/toi/src/*.cpp, packages/otoi/src/*.cpp — same bare-include fix applied (TermsOfInteraction.h, TOITypes.h, OTOIManager.h, OTOITypes.h → namespaced forms)
+- packages/otoi — fixed latent C++23 issues found during verification: missing #include <expected> in OTOIManager.h, CMakeLists.txt CXX_STANDARD corrected 20→23 (std::expected is C++23), missing <set> include, OTOIValidator::validate typed→JSON bridge (it passed typed members to its own JSON-shaped validators), PolicyConflict tier string→enum mapping, resolveEnforcement made public for OTOIManager::safeHonor
+- packages/include/ — new vendored header root: nlohmann/json.hpp (official 3.11.3 single-header, MIT), tl/expected.hpp (upstream 1.3.1, CC0; required by toi), spdlog/spdlog.h (minimal local compatibility shim, clearly labeled for replacement by real spdlog)
+- packages/include/README.md — provenance, versions, licenses, per-package header requirements, build/verify commands
+- packages/{toi,otoi,sleepwalker}/tests/standalone_test.cpp — dependency-free runners written against the actual implemented APIs, mirroring the Catch2 suites' core behaviors (Catch2 and CMake are unavailable on this machine)
+
+**Key design decisions:**
+- Vendor official upstream single-headers instead of trimming package dependencies — packages/* source stays canonical, vcpkg remains the primary dependency path
+- spdlog provided as a labeled shim (ports use only a tiny API subset); documented for replacement under a full toolchain
+- Standalone runners exit non-zero on failure so they can serve as CI smoke tests without Catch2
+
+**Governance compliance:** 22/22 validation checks passing. Self-registered per OTOI §3 (docs/agent-log/registrations/2026-09-06-cline-hermetic-builds.json). Handoff record written (docs/agent-log/handoffs/2026-09-06-cline-hermetic-builds.json). Commits follow [AGENT_NAME] format. No credentials or external integrations.
+
+**Blockers:** None (no system vcpkg/CMake — pre-existing environment limitation, documented in packages/include/README.md)
+
+**Next action:** CI adopters may wire the standalone runners in as required smoke checks; Phase 6 ASFDK umbrella integration can reuse packages/include as its fallback include root.
+
