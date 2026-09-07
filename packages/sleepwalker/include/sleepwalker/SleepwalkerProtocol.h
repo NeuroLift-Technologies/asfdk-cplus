@@ -19,6 +19,7 @@
 #include "ConsentManager.h"
 #include "ContinuityManager.h"
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
 #include <optional>
@@ -127,7 +128,7 @@ private:
     ContinuityManager m_continuityManager;
     nlohmann::json m_userToi;
     std::string m_privacyMode;
-    std::shared_ptr<spdlog::logger> m_logger;
+    // Logger removed — using spdlog::info/warn/error directly (shim-compatible)
     bool m_loggingEnabled;
 
     /// Check if SWP is active in user's TOI (default: true)

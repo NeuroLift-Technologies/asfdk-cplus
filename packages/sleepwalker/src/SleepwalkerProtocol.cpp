@@ -8,7 +8,6 @@
 
 #include "sleepwalker/SleepwalkerProtocol.h"
 #include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace sleepwalker {
 
@@ -24,12 +23,11 @@ SleepwalkerProtocol::SleepwalkerProtocol(const SleepwalkerProtocol::Options& opt
     , m_loggingEnabled(options.loggingEnabled) {
     // Initialize instance-level logger (no global state mutation per DECISIONS.md §7)
     if (m_loggingEnabled) {
-        m_logger = spdlog::stdout_color_mt("sleepwalker");
-        m_logger->set_level(spdlog::level::info);
+        spdlog::set_level(spdlog::level::info);
     }
 
     if (m_loggingEnabled) {
-        m_logger->info("Sleepwalker Protocol initialized");
+        spdlog::info("Sleepwalker Protocol initialized");
     }
 }
 
@@ -216,7 +214,7 @@ ResponseGuidance SleepwalkerProtocol::graduatedConsentOffer(ConsentLevel level) 
 
 void SleepwalkerProtocol::logObservation(const EmotionalState& state, bool intervention) {
     if (m_loggingEnabled) {
-        m_logger->info("SWP Observation - State: {}, Protective: {}, Intervention: {}",
+        spdlog::info("SWP Observation - State: {}, Protective: {}, Intervention: {}",
                      stateTypeToString(state.stateType),
                      state.protective ? "true" : "false",
                      intervention ? "true" : "false");

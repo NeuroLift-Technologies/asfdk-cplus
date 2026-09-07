@@ -137,7 +137,7 @@ private:
     // The release store on m_active in safeHonor() synchronizes with the acquire
     // load in getStatus(), establishing a proper happens-before relationship
     // for m_mode reads as well.
-    mutable std::atomic<bool> m_active{false};
+    mutable std::atomic<bool> m_active{true};
     mutable std::atomic<EnforcementMode> m_mode{EnforcementMode::Enforced};
 };
 
