@@ -14,6 +14,53 @@ This is the C/C++ port of the NeuroLift Technologies ASFDK (Solidarity Framework
 - `NeuroLift-Technologies/asfdk-csharp` — C#/.NET port
 - `NeuroLift-Technologies/asfdk-harness` — ASFDK harness/runtime
 
+## Architecture
+
+![ASFDK Architecture](asfdk-architecture.png)
+
+```mermaid
+graph TD
+    subgraph Source["Original ASFDK (TypeScript/Python)"]
+        TOI[TOI Contract]
+        OTOI[OTOI Mesh]
+        RRT[RRT Advocate]
+        SWP[Sleepwalker Protocol]
+    end
+
+    subgraph Target["ASFDK-C++ (C++20 Enforcement Layer)"]
+        TOIC[TOI-C++]
+        OTOIC[OTOI-C++]
+        RRTC[RRT-C++]
+        SWPC[Sleepwalker-C++]
+        ASFDKC{ASFDK Umbrella}
+        
+        TOIC --> ASFDKC
+        OTOIC --> ASFDKC
+        RRTC --> ASFDKC
+        SWPC --> ASFDKC
+    end
+
+    Source -. Porting & Translation .-> Target
+
+    subgraph Unreal["Unreal Engine 5.8 (nlt-world-engine)"]
+        NLT[NLTGovernanceSubsystem]
+        Mass[Mass Entity / FNLTGovernanceFragment]
+        Avatar[AvatarCharacter & AIController / UNLTAgentGovernanceComponent]
+        
+        NLT --> Mass
+        NLT --> Avatar
+    end
+
+    subgraph External["External Integrations"]
+        Native[Native C++ Apps]
+        Fusion[Fusion-Unreal Semantic Bridge]
+    end
+
+    ASFDKC ===|Runtime Semantic/Physical Boundary| NLT
+    ASFDKC --> Native
+    ASFDKC --> Fusion
+```
+
 ## Structure
 
 ```
