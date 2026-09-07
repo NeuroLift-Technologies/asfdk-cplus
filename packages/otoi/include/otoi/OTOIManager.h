@@ -129,7 +129,9 @@ private:
     bool isAgentDeclared(const OtoiCharter& charter, const std::string& agentId) const;
 
     // Current component state
-    bool m_active = false;
+    // m_active is mutated by safeHonor (const) to record that governance is
+    // engaged once a charter has been successfully honored.
+    mutable bool m_active = false;
     EnforcementMode m_mode = EnforcementMode::Enforced;
 };
 
