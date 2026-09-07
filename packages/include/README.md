@@ -40,7 +40,7 @@ g++ -std=c++20 -I packages/toi/include -I packages/include \
     packages/toi/tests/standalone_test.cpp packages/toi/src/*.cpp -o /tmp/toi_test
 
 # OTOI
-g++ -std=c++20 -I packages/otoi/include -I packages/include \
+g++ -std=c++23 -I packages/otoi/include -I packages/include \
     packages/otoi/tests/standalone_test.cpp packages/otoi/src/*.cpp -o /tmp/otoi_test
 
 # Sleepwalker

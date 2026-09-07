@@ -88,9 +88,13 @@ std::expected<void, OtoiValidationError> OTOIValidator::validate(const OtoiChart
     nlohmann::json sourcesJson = nlohmann::json::array();
     for (const auto& source : charter.toi_sources) {
         nlohmann::json s{{"tier", tierLabel(source.tier)}};
+        // Emit each field independently rather than as an else-if chain so
+        // validateToiSources can still flag mutually-exclusive uri/inline
+        // sources when both happen to be present.
         if (source.uri.has_value()) {
             s["uri"] = *source.uri;
-        } else if (source.inline_doc.has_value()) {
+        }
+        if (source.inline_doc.has_value()) {
             s["inline"] = *source.inline_doc;
         }
         sourcesJson.push_back(std::move(s));
@@ -295,10 +299,10 @@ std::vector<PolicyConflict> OTOIValidator::detectConflicts(const std::vector<nlo
             }
 
             if (values.size() > 1) {
+                auto resolvedTier = tier_from_string(tier);
+                if (!resolvedTier.has_value()) continue; // skip unknown tier keys
                 PolicyConflict conflict;
-                conflict.tier = tier == "personal" ? Tier::Personal
-                              : tier == "community" ? Tier::Community
-                              : Tier::Project;
+                conflict.tier = *resolvedTier;
                 conflict.path = path;
                 conflict.values = std::vector<std::string>(values.begin(), values.end());
                 conflicts.push_back(conflict);
