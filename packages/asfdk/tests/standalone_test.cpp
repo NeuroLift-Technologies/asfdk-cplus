@@ -147,9 +147,19 @@ int main() {
     }
     {
         asfdk::ASFDK asfdk;
+        // Prime OTOI with a charter so getStatus() reflects an active, enforced
+        // governance layer (the OTOI manager activates on first honor()).
+        asfdk.honor(asfdk.parseCharter(nlohmann::json::parse(R"({
+            "$otoi": "1.0.0",
+            "identity": {"author": "status-user"},
+            "agents": [{"id": "agent-1"}],
+            "toi_sources": [
+                {"tier": "personal", "inline": {"$toi": "1.0.0", "$tier": "personal", "identity": {"author": "user"}}}
+            ]
+        })")), {});
         auto status = asfdk.getStatus();
         check(status.toi_active, "status: toi active");
-        check(status.otoi_active && status.otoi_mode == "ENFORCED", "status: otoi active/enforced");
+        check(status.otoi_active && status.otoi_mode == "enforced", "status: otoi active/enforced");
         check(status.rrt_active, "status: rrt active");
         check(status.swp_active, "status: swp active");
         check(status.overall == "operational", "status: overall operational");

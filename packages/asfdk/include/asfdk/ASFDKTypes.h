@@ -1,14 +1,12 @@
 #pragma once
 
 #include <string>
-#include <vector>
-#include <memory>
 
 namespace asfdk {
 
 /**
- * @brief Core types used across the ASFDK umbrella for 
- * cross-pillar communication and unified API responses.
+ * @brief Result of a governance validation/wellness/checkpoint operation.
+ * Kept for compatibility with the unified governance surface.
  */
 struct GovernanceResult {
     bool success;
@@ -21,6 +19,25 @@ enum class GovernanceLevel {
     Warning,
     Critical,
     Crisis
+};
+
+/**
+ * @brief Umbrella-level error type for safe-parse entry points
+ * that funnel pillar errors into a single shape for callers.
+ */
+struct ASFDKError {
+    enum class Code {
+        None,
+        ParseError,
+        ValidationError,
+        HonorError,
+        DetectionError,
+        ConfigError,
+        UnknownError
+    };
+
+    Code code = Code::None;
+    std::string message;
 };
 
 } // namespace asfdk
