@@ -175,6 +175,14 @@
 
 ---
 
+### Thread: phase-6-consolidated-concurrency-fix
+**Status:** completed
+**Owner:** Hermes / desktop
+**Started:** 2026-09-07
+**Last updated:** 2026-09-07
+**Summary:** Consolidated all Phase 6 fixes from the PR #20→#21→#22 chain into a single branch against main. Three fixes applied: (1) m_active made mutable std::atomic<bool> — fixes compilation failure in safeHonor() const; (2) m_mode made mutable std::atomic<EnforcementMode> — fixes CodeRabbit data race; (3) Sleepwalker CMakeLists.txt restored VCPKG_ROOT per DECISIONS.md §4. Combined with the correct release/acquire ordering (m_mode relaxed-store before m_active release-store; m_active acquire-load before m_mode relaxed-load in getStatus), this fully resolves both CodeRabbit Critical comments from PR #20.
+**Blockers:** None
+**Next action:** PR review — this replaces the 3-PR chain (#20, #21, #22) with a single consolidated PR against main.
 ### Thread: phase-6-pr18-pr19-review
 **Status:** completed
 **Owner:** Hermes / desktop

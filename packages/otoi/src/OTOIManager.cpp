@@ -564,10 +564,10 @@ std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const Otoi
     policy.agents = charter.agents;
 
     // Governance is engaged once a charter has been successfully honored.
-    // Publish m_mode with a release store BEFORE signaling m_active, so that
-    // getStatus()'s acquire-load of m_active makes the m_mode write visible.
-    // This eliminates the data race between safeHonor() writes and getStatus()
-    // reads — both fields are now atomic with proper release/acquire ordering.
+    // Publish m_mode with a relaxed store BEFORE signaling m_active with a
+    // release store, so that getStatus()'s acquire-load of m_active makes the
+    // m_mode write visible. Both fields are now atomic, eliminating the data
+    // race between safeHonor() writes and getStatus() reads.
     m_mode.store(resolvedEnforcement.mode, std::memory_order_relaxed);
     m_active.store(true, std::memory_order_release);
 
