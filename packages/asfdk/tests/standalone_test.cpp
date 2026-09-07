@@ -37,11 +37,10 @@ int main() {
     }
     {
         asfdk::ASFDK asfdk;
-        std::string error;
-        auto doc = asfdk.safeParseTOI(nlohmann::json::parse(
-            R"({"$toi":"2.0.0","$tier":"personal","identity":{"author":"anonymous"}})"), &error);
-        check(!doc.has_value(), "toi: safeParse rejects invalid version");
-        check(!error.empty(), "toi: safeParse populates error string");
+        auto result = asfdk.safeParseTOI(nlohmann::json::parse(
+            R"({"$toi":"2.0.0","$tier":"personal","identity":{"author":"anonymous"}})"));
+        check(!result.has_value(), "toi: safeParse rejects invalid version");
+        check(!result.error().message.empty(), "toi: safeParse populates error message");
     }
     {
         asfdk::ASFDK asfdk;
@@ -78,12 +77,11 @@ int main() {
     }
     {
         asfdk::ASFDK asfdk;
-        asfdk::ASFDKError error;
-        auto charter = asfdk.safeParseCharter(
-            nlohmann::json::parse(R"({"identity":{"author":"missing-$otoi"}})"), &error);
-        check(!charter.has_value(), "otoi: safeParseCharter rejects invalid charter");
-        check(error.code != asfdk::ASFDKError::Code::UnknownError, "otoi: error code mapped");
-        check(!error.message.empty(), "otoi: error message populated");
+        auto result = asfdk.safeParseCharter(
+            nlohmann::json::parse(R"({"identity":{"author":"missing-$otoi"}})"));
+        check(!result.has_value(), "otoi: safeParseCharter rejects invalid charter");
+        check(result.error().code == otoi::OtoiErrorCode::Validation, "otoi: error code mapped");
+        check(!result.error().message.empty(), "otoi: error message populated");
     }
 
     // ---------------- RRT surface ----------------
