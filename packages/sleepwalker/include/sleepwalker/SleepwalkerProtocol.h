@@ -22,6 +22,19 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <memory>
+
+// spdlog is an optional logging dependency (via vcpkg). Keep this header
+// self-contained for hermetic builds: use it when available, otherwise fall
+// back to a forward declaration (m_logger is only ever a shared_ptr member).
+#if defined(__has_include)
+#  if __has_include(<spdlog/spdlog.h>)
+#    include <spdlog/spdlog.h>
+#  endif
+#endif
+#ifndef SPDLOG_LOGGER_AVAILABLE
+namespace spdlog { class logger; }
+#endif
 
 namespace sleepwalker {
 
