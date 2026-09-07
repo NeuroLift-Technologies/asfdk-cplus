@@ -1,6 +1,7 @@
 #pragma once
 
 #include "OTOITypes.h"
+#include <expected> // std::expected (C++23)
 #include <nlohmann/json.hpp>
 
 namespace otoi {
@@ -47,6 +48,12 @@ public:
     // Cross-tier disagreement is NOT a conflict — that is what tier precedence is for
     std::vector<PolicyConflict> detectConflicts(const std::vector<nlohmann::json>& documents) const;
 
+public:
+    // Resolve enforcement to concrete values with defaults.
+    // Pure resolver over raw enforcement settings; exposed so OTOIManager
+    // can reuse it when honoring charters.
+    ResolvedEnforcement resolveEnforcement(const OtoiEnforcement& raw) const;
+
 private:
     // Validate reserved keys
     std::vector<OtoiIssue> validateReservedKeys(const nlohmann::json& json) const;
@@ -62,9 +69,6 @@ private:
 
     // Validate toi_sources array
     std::vector<OtoiIssue> validateToiSources(const nlohmann::json& sources) const;
-
-    // Resolve enforcement to concrete values with defaults
-    ResolvedEnforcement resolveEnforcement(const OtoiEnforcement& raw) const;
 };
 
 // ============ OTOIManager ============

@@ -24,7 +24,6 @@ add_library(sleepwalker-cplus
     src/SleepwalkerProtocol.cpp
 )
 
-target_name(sleepwalker-cplus)
 set_target_properties(sleepwalker-cplus PROPERTIES
     CXX_STANDARD 20
     CXX_EXTENSIONS OFF)
