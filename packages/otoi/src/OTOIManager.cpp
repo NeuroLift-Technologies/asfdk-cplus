@@ -250,6 +250,19 @@ std::vector<PolicyConflict> OTOIValidator::detectConflicts(const std::vector<nlo
 
     // Check for conflicts within each tier
     for (const auto& [tier, tierDocs] : byTier) {
+        auto resolvedTier = tier_from_string(tier);
+        if (!resolvedTier.has_value()) {
+            // Unresolvable $tier: surface it as a conflict so callers using
+            // ConflictStrategy::Reject refuse rather than silently dropping
+            // the document (resolveDocuments drops them, so the two paths
+            // must agree — see resolveDocuments).
+            PolicyConflict conflict;
+            conflict.tier = Tier::Project;
+            conflict.path = "$tier";
+            conflict.values = {tier};
+            conflicts.push_back(conflict);
+            continue;
+        }
         if (tierDocs.size() < 2) continue;
 
         // Collect all leaf paths across documents in this tier
@@ -299,8 +312,6 @@ std::vector<PolicyConflict> OTOIValidator::detectConflicts(const std::vector<nlo
             }
 
             if (values.size() > 1) {
-                auto resolvedTier = tier_from_string(tier);
-                if (!resolvedTier.has_value()) continue; // skip unknown tier keys
                 PolicyConflict conflict;
                 conflict.tier = *resolvedTier;
                 conflict.path = path;
