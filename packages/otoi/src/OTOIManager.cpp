@@ -88,9 +88,13 @@ std::expected<void, OtoiValidationError> OTOIValidator::validate(const OtoiChart
     nlohmann::json sourcesJson = nlohmann::json::array();
     for (const auto& source : charter.toi_sources) {
         nlohmann::json s{{"tier", tierLabel(source.tier)}};
+        // Emit each field independently rather than as an else-if chain so
+        // validateToiSources can still flag mutually-exclusive uri/inline
+        // sources when both happen to be present.
         if (source.uri.has_value()) {
             s["uri"] = *source.uri;
-        } else if (source.inline_doc.has_value()) {
+        }
+        if (source.inline_doc.has_value()) {
             s["inline"] = *source.inline_doc;
         }
         sourcesJson.push_back(std::move(s));
@@ -246,6 +250,19 @@ std::vector<PolicyConflict> OTOIValidator::detectConflicts(const std::vector<nlo
 
     // Check for conflicts within each tier
     for (const auto& [tier, tierDocs] : byTier) {
+        auto resolvedTier = tier_from_string(tier);
+        if (!resolvedTier.has_value()) {
+            // Unresolvable $tier: surface it as a conflict so callers using
+            // ConflictStrategy::Reject refuse rather than silently dropping
+            // the document (resolveDocuments drops them, so the two paths
+            // must agree — see resolveDocuments).
+            PolicyConflict conflict;
+            conflict.tier = Tier::Project;
+            conflict.path = "$tier";
+            conflict.values = {tier};
+            conflicts.push_back(conflict);
+            continue;
+        }
         if (tierDocs.size() < 2) continue;
 
         // Collect all leaf paths across documents in this tier
@@ -296,9 +313,7 @@ std::vector<PolicyConflict> OTOIValidator::detectConflicts(const std::vector<nlo
 
             if (values.size() > 1) {
                 PolicyConflict conflict;
-                conflict.tier = tier == "personal" ? Tier::Personal
-                              : tier == "community" ? Tier::Community
-                              : Tier::Project;
+                conflict.tier = *resolvedTier;
                 conflict.path = path;
                 conflict.values = std::vector<std::string>(values.begin(), values.end());
                 conflicts.push_back(conflict);
@@ -623,18 +638,33 @@ nlohmann::json OTOIManager::resolveDocuments(const std::vector<nlohmann::json>& 
         return nlohmann::json::object();
     }
 
-    // Sort documents by tier precedence: personal > community > project
+    // Sort documents by tier precedence: personal > community > project.
+    // Documents whose $tier cannot be resolved are dropped here (not silently
+    // merged with priority 0) so that detectConflicts and resolveDocuments
+    // agree: an unparseable $tier never participates in resolution.
     auto tierPriority = [](const nlohmann::json& doc) -> int {
         if (doc.contains("$tier") && doc["$tier"].is_string()) {
-            std::string tier = doc["$tier"].get<std::string>();
-            if (tier == "personal") return 3;
-            if (tier == "community") return 2;
-            if (tier == "project") return 1;
+            auto tier = tier_from_string(doc["$tier"].get<std::string>());
+            if (tier) {
+                switch (*tier) {
+                    case Tier::Personal: return 3;
+                    case Tier::Community: return 2;
+                    case Tier::Project: return 1;
+                }
+            }
         }
-        return 0;
+        return -1; // unresolvable — filtered out below
     };
 
-    std::vector<nlohmann::json> sorted = documents;
+    std::vector<nlohmann::json> sorted;
+    for (const auto& doc : documents) {
+        if (tierPriority(doc) >= 0) sorted.push_back(doc);
+    }
+
+    if (sorted.empty()) {
+        return nlohmann::json::object();
+    }
+
     std::sort(sorted.begin(), sorted.end(), [&](const nlohmann::json& a, const nlohmann::json& b) {
         return tierPriority(a) > tierPriority(b);
     });

@@ -13,6 +13,39 @@
  */
 
 #include "sleepwalker/SleepwalkerProtocol.h"
+
+
+// Local process-id helper — the ports have no cross-platform PID utility, and
+// tests only need a unique suffix for temp directories. POSIX unistd.h and
+// Windows process.h provide the platform's own unique-directory API
+// (::getpid / ::getpid), which is unique across processes. Other non-POSIX
+// targets fall back to a non-throwing seed (random_device, with a
+// high-resolution-clock fallback) plus a process-local atomic counter, so the
+// runner compiles without relying on any transitive header and no two
+// directories ever collide within a process.
+#if defined(_WIN32)
+#include <process.h>
+static std::string localProcessId() { return std::to_string(static_cast<long>(::_getpid())); }
+#elif defined(__unix__) || defined(__unix) || defined(__APPLE__)
+#include <unistd.h>
+static std::string localProcessId() { return std::to_string(static_cast<long>(::getpid())); }
+#else
+#include <atomic>
+#include <chrono>
+#include <random>
+static std::string localProcessId() {
+    static std::atomic<long> counter{0};
+    long seed;
+    try {
+        std::random_device rd;
+        seed = static_cast<long>(rd());
+    } catch (...) {
+        seed = static_cast<long>(
+            std::chrono::steady_clock::now().time_since_epoch().count() & 0x7FFFFFFFL);
+    }
+    return std::to_string(seed + counter.fetch_add(1, std::memory_order_relaxed));
+}
+#endif
 #include "sleepwalker/StateDetector.h"
 #include "sleepwalker/ConsentManager.h"
 #include "sleepwalker/ContinuityManager.h"
@@ -155,7 +188,7 @@ void testConsentManagerMessages() {
 void testContinuityManager() {
     namespace fs = std::filesystem;
     fs::path storage = fs::temp_directory_path() /
-                       ("swp_test_storage_" + std::to_string(::getpid()));
+                       ("swp_test_storage_" + localProcessId());
     std::error_code ec;
     fs::remove_all(storage, ec);
 
@@ -201,7 +234,7 @@ void testProtocolBasics() {
     SleepwalkerProtocol::Options opts;
     opts.loggingEnabled = false;
     opts.storagePath = (std::filesystem::temp_directory_path() /
-                        ("swp_proto_" + std::to_string(::getpid()))).string();
+                        ("swp_proto_" + localProcessId())).string();
     SleepwalkerProtocol swp(opts);
 
     nlohmann::json status = SleepwalkerProtocol::getStatus();
@@ -217,7 +250,7 @@ void testProtocolAssessment() {
     SleepwalkerProtocol::Options opts;
     opts.loggingEnabled = false;
     opts.storagePath = (std::filesystem::temp_directory_path() /
-                        ("swp_proto2_" + std::to_string(::getpid()))).string();
+                        ("swp_proto2_" + localProcessId())).string();
     SleepwalkerProtocol swp(opts);
 
     InteractionAssessment a = swp.assessInteraction("please review this pull request");
@@ -241,7 +274,7 @@ void testProtocolResponseGuidance() {
     SleepwalkerProtocol::Options opts;
     opts.loggingEnabled = false;
     opts.storagePath = (std::filesystem::temp_directory_path() /
-                        ("swp_proto3_" + std::to_string(::getpid()))).string();
+                        ("swp_proto3_" + localProcessId())).string();
     SleepwalkerProtocol swp(opts);
 
     // Protective state → stable low-demand response.
@@ -279,7 +312,7 @@ void testProtocolContinuityEndToEnd() {
     SleepwalkerProtocol::Options opts;
     opts.loggingEnabled = false;
     opts.storagePath = (std::filesystem::temp_directory_path() /
-                        ("swp_proto4_" + std::to_string(::getpid()))).string();
+                        ("swp_proto4_" + localProcessId())).string();
     SleepwalkerProtocol swp(opts);
 
     swp.maintainContinuity("bob", {{"emotional_state", "avoidance"},
