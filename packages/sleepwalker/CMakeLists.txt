@@ -4,11 +4,9 @@ project(sleepwalker-cplus VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find dependencies via vcpkg
-# Uses VCPKG_ROOT environment variable per DECISIONS.md §4
-if(DEFINED ENV{VCPKG_ROOT})
-    list(APPEND CMAKE_PREFIX_PATH "$ENV{VCPKG_ROOT}/installed/x64-linux")
-endif()
+# Find dependencies via vcpkg (same toolchain as packages/toi)
+set(VPKG_DIR "/home/joshd/Documents/NLT/Engine/Plugins/Runtime/GeoReferencing/Source/ThirdParty/vcpkg-installed/overlay-x64-uwp")
+list(APPEND CMAKE_PREFIX_PATH "/home/joshd/Documents/NLT/Engine/Plugins/Runtime/GeoReferencing/Source/ThirdParty/vcpkg-installed/overlay-x64-uwp")
 find_package(nlohmann_json 3.4.0 REQUIRED)
 find_package(Catch2 3.4.0 REQUIRED)
 find_package(spdlog 1.11.0 REQUIRED)
