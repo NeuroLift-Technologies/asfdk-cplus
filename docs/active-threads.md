@@ -183,3 +183,30 @@
 **Summary:** Consolidated all Phase 6 fixes from the PR #20→#21→#22 chain into a single branch against main. Three fixes applied: (1) m_active made mutable std::atomic<bool> — fixes compilation failure in safeHonor() const; (2) m_mode made mutable std::atomic<EnforcementMode> — fixes CodeRabbit data race; (3) Sleepwalker CMakeLists.txt restored VCPKG_ROOT per DECISIONS.md §4. Combined with the correct release/acquire ordering (m_mode relaxed-store before m_active release-store; m_active acquire-load before m_mode relaxed-load in getStatus), this fully resolves both CodeRabbit Critical comments from PR #20.
 **Blockers:** None
 **Next action:** PR review — this replaces the 3-PR chain (#20, #21, #22) with a single consolidated PR against main.
+### Thread: phase-6-pr18-pr19-review
+**Status:** completed
+**Owner:** Hermes / desktop
+**Started:** 2026-09-07
+**Summary:** Reviewed two merged Phase 6 PRs (PR #18 umbrella; PR #19 OTOI manager state fix). Both merged to main. PR #18 introduced regressions: (1) Sleepwalker CMakeLists.txt hardcoded vcpkg path instead of VCPKG_ROOT per DECISIONS.md §4; (2) OTOI m_active is plain mutable bool (data race between safeHonor const-write and getStatus read); (3) m_mode never updated after safeHonor. Created branch phase-6-review-fixes with all three fixes. Handoff record written.
+**Blockers:** None
+**Next action:** Create PR from phase-6-review-fixes against main.
+
+---
+
+### Thread: phase-6-pr20-hermes-additional-review
+**Status:** completed
+**Owner:** Hermes / desktop
+**Started:** 2026-09-07
+**Summary:** Conducted additional review of PR #20 (phase-6-review-fixes). Two CodeRabbit comments remain unaddressed: (1) m_active declared as std::atomic<bool> without mutable qualifier — safeHonor() is const and calls .store() which is non-const, causing compilation failure; (2) m_mode write happens AFTER the release store on m_active, so the release/acquire pair does not synchronize m_mode reads in getStatus() — data race. Applied fixes: made m_active mutable, reordered writes (m_mode before release-store), changed getStatus() to acquire-load m_active. Committed to branch phase-6-hermes-review-fixes.
+**Blockers:** None
+**Next action:** Create PR from phase-6-hermes-review-fixes against phase-6-review-fixes (or main if PR #20 merges first).
+
+---
+
+### Thread: phase-6-coderabbit-mmode-race-fix
+**Status:** completed
+**Owner:** Hermes / desktop
+**Started:** 2026-09-07
+**Summary:** CodeRabbit commented on PR #20 (phase-6-review-fixes) that reordering m_mode write before the release store on m_active is insufficient — m_mode is still a plain mutable EnforcementMode (non-atomic), so concurrent reads in getStatus() can still race. PR #21 (phase-6-hermes-review-fixes) applied the reordering but did NOT make m_mode atomic. Applied the proper fix in branch phase-6-hermes-atomic-mmode: made both m_active and m_mode std::atomic, with release-store on m_active and acquire-load in getStatus(). m_mode uses relaxed ordering on both store and load (it is synchronized by the m_active release/acquire pair). This fully eliminates the data race per C++11 memory model.
+**Blockers:** None
+**Next action:** Create PR from phase-6-hermes-atomic-mmode against phase-6-hermes-review-fixes.
