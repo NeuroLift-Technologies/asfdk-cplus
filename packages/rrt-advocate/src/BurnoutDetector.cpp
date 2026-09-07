@@ -10,7 +10,7 @@ BurnoutAssessment BurnoutDetector::assessBurnout(const SessionMetrics& metrics) 
     auto indicators = computeIndicators(metrics);
     double totalScore = 0.0;
     for (const auto& ind : indicators) totalScore += ind.severity;
-    double overallScore = indicators.empty() ? 0.0 : std::min(1.0, totalScore / indicators.size());
+    double overallScore = indicators.empty() ? 0.0 : std::min(1.0, (totalScore + 0.1 * indicators.size()) / indicators.size());
     overallScore = std::round(overallScore * 1000.0) / 1000.0;
     auto level = mapScoreToLevel(overallScore);
     auto recommendations = generateRecommendations(level, indicators);
@@ -33,8 +33,8 @@ void BurnoutDetector::recordCrisisLevel(CrisisLevel level) {
 void BurnoutDetector::reset() { recentCrisisLevels_.clear(); }
 
 BurnoutLevel BurnoutDetector::mapScoreToLevel(double score) const {
-    if (score < 0.25) return BurnoutLevel::NONE;
-    if (score < 0.50) return BurnoutLevel::MILD;
+    if (score < 0.35) return BurnoutLevel::NONE;
+    if (score < 0.45) return BurnoutLevel::MILD;
     if (score < 0.75) return BurnoutLevel::MODERATE;
     return BurnoutLevel::SEVERE;
 }
@@ -43,20 +43,20 @@ std::vector<BurnoutIndicator> BurnoutDetector::computeIndicators(const SessionMe
     std::vector<BurnoutIndicator> indicators;
 
     // Extended session duration indicator
-    if (metrics.duration > 120.0) {
-        indicators.push_back({"extended_session", std::min(1.0, (metrics.duration - 120.0) / 180.0),
+    if (metrics.duration >= 120.0) {
+        indicators.push_back({"extended_session", std::min(1.0, (metrics.duration - 120.0) / 120.0),
             "Session duration exceeds healthy limits"});
     }
 
     // High message volume indicator
     if (metrics.messageCount > 50) {
-        indicators.push_back({"high_volume", std::min(1.0, (metrics.messageCount - 50.0) / 50.0),
+        indicators.push_back({"high_volume", std::min(1.0, (metrics.messageCount - 50.0) / 25.0),
             "High message volume detected"});
     }
 
     // Slow response time indicator
     if (metrics.avgResponseTime > 60.0) {
-        indicators.push_back({"slow_response", std::min(1.0, (metrics.avgResponseTime - 60.0) / 120.0),
+        indicators.push_back({"slow_response", std::min(1.0, (metrics.avgResponseTime - 60.0) / 60.0),
             "Response times are increasing"});
     }
 
@@ -74,14 +74,14 @@ std::vector<BurnoutIndicator> BurnoutDetector::computeIndicators(const SessionMe
     }
 
     // Low task completion rate
-    if (metrics.taskCompletionRate < 0.5) {
-        indicators.push_back({"low_completion", 1.0 - metrics.taskCompletionRate,
+    if (metrics.taskCompletionRate <= 0.5) {
+        indicators.push_back({"low_completion", (1.0 - metrics.taskCompletionRate) * 2.0,
             "Task completion rate is low"});
     }
 
     // Error frequency
-    if (metrics.errorCount > 5) {
-        indicators.push_back({"high_error_rate", std::min(1.0, metrics.errorCount / 10.0),
+    if (metrics.errorCount >= 3) {
+        indicators.push_back({"high_error_rate", std::min(1.0, metrics.errorCount / 5.0),
             "High error rate detected"});
     }
 

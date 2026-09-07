@@ -23,8 +23,8 @@ SentimentReading SentimentLayer::fallbackScore(const std::string& text) {
     static const std::set<std::string> negativeWords = {
         "bad", "terrible", "awful", "horrible", "hate", "depressed",
         "anxious", "scared", "hopeless", "worthless", "useless",
-        "pain", "hurt", "suffering", "stuck", "broken", "lost",
-        "fail", "can't", "cannot", "never", "worst", "empty",
+        "pain", "hurt", "suffering", "stuck", "broken", "lost", "cope",
+        "fail", "can't", "cannot", "cant", "never", "worst", "empty",
     };
 
     std::string lower;
@@ -47,7 +47,7 @@ SentimentReading SentimentLayer::fallbackScore(const std::string& text) {
     }
     int total = posCount + negCount;
     double compound = 0.0;
-    if (total > 0) compound = static_cast<double>(posCount - negCount) / (total + 2);
+    if (total > 0) compound = static_cast<double>(posCount - negCount) / total;
     compound = std::max(-1.0, std::min(1.0, compound));
     double negRatio = total > 0 ? static_cast<double>(negCount) / total : 0.0;
 
@@ -67,7 +67,7 @@ double SentimentLayer::computeConfidence(const SentimentReading& reading, double
     double confidence = 0.0;
     if (reading.compound < -0.6) confidence += 0.30;
     else if (reading.compound < -0.3) confidence += 0.15;
-    else if (reading.compound < 0.0) confidence += 0.05;
+    else if (reading.compound < 0.0) confidence += 0.10;
     if (trend == SentimentTrend::SHARPLY_DECLINING) confidence += 0.20;
     else if (trend == SentimentTrend::DECLINING) confidence += 0.10;
     return std::min(1.0, confidence);
