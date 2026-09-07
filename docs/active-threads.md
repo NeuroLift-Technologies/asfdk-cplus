@@ -172,3 +172,13 @@
 
 **Next action:** CI adopters may wire the standalone runners in as required smoke checks; Phase 6 ASFDK umbrella integration can reuse packages/include as its fallback include root.
 
+
+---
+
+### Thread: phase-6-pr18-pr19-review
+**Status:** completed
+**Owner:** Hermes / desktop
+**Started:** 2026-09-07
+**Summary:** Reviewed two merged Phase 6 PRs (PR #18 umbrella; PR #19 OTOI manager state fix). Both merged to main. PR #18 introduced regressions: (1) Sleepwalker CMakeLists.txt hardcoded vcpkg path instead of VCPKG_ROOT per DECISIONS.md §4; (2) OTOI m_active is plain mutable bool (data race between safeHonor const-write and getStatus read); (3) m_mode never updated after safeHonor. Created branch phase-6-review-fixes with all three fixes. Handoff record written.
+**Blockers:** None
+**Next action:** Create PR from phase-6-review-fixes against main.
