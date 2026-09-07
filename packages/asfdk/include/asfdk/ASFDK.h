@@ -5,8 +5,7 @@
 #include <optional>
 #include <vector>
 
-// Include actual pillar headers (TOI public API is the free functions in
-// TermsOfInteraction.h — TOIManager is an internal implementation detail).
+// Include actual pillar headers
 #include "toi/TermsOfInteraction.h"
 #include "otoi/OTOIManager.h"
 #include "rrt/RRTAdvocate.h"
@@ -18,14 +17,13 @@
 
 namespace asfdk {
 
-// NOTE: Pillar types are fully defined by the pillar headers included above.
-// Value members (std::optional / by-value) require complete types.
-
 struct Envelope {
     bool trusted;
     std::string channel;
     std::string consentLevel;
     nlohmann::json payload;
+    bool flagged = false;
+    std::string flagReason;
 };
 
 struct AssessmentResult {
@@ -39,6 +37,7 @@ struct FoundationStatus {
     bool otoi_active;
     bool rrt_active;
     bool swp_active;
+    std::string otoi_mode;
     std::string overall;
 
     nlohmann::json toJson() const;
@@ -46,7 +45,7 @@ struct FoundationStatus {
 
 /**
  * @brief The ASFDK Umbrella class.
- * Composes the four pillars of the Solidarity Framework into a 
+ * Composes the four pillars of the Solidarity Framework into a
  * single unified interface for the application.
  */
 class ASFDK {
@@ -54,21 +53,21 @@ public:
     ASFDK();
     ~ASFDK();
 
-    // Prevent copying to ensure singleton-like behavior within a context
     ASFDK(const ASFDK&) = delete;
     ASFDK& operator=(const ASFDK&) = delete;
 
-    // ===================== TOI surface (pass-through to toi::TOIManager) =====================
+    // ===================== TOI surface (free functions) =====================
     
     toi::TOIDocument parseTOI(const nlohmann::json& json);
-    std::optional<toi::TOIDocument> safeParseTOI(const nlohmann::json& json, std::string* error = nullptr);
+    tl::expected<toi::TOIDocument, toi::TOIError> safeParseTOI(const nlohmann::json& json);
     bool validateTOI(const toi::TOIDocument& doc);
     toi::TOIDocument resolveTOI(std::vector<toi::TOIDocument> docs);
+    std::string canonicalize(const std::string& json);
 
     // ===================== OTOI surface (pass-through to otoi::OTOIManager) =====================
     
     otoi::OtoiCharter parseCharter(const nlohmann::json& json);
-    std::optional<otoi::OtoiCharter> safeParseCharter(const nlohmann::json& json, otoi::ASFDKError* error = nullptr);
+    std::expected<otoi::OtoiCharter, otoi::OtoiError> safeParseCharter(const nlohmann::json& json);
     otoi::EffectivePolicy honor(const otoi::OtoiCharter& charter, const otoi::HonorOptions& options = {});
     nlohmann::json propagate(const otoi::EffectivePolicy& policy, const std::string& agentId);
 
@@ -87,19 +86,11 @@ public:
 
     // ===================== Unified governance surface =====================
     
-    GovernanceResult validateInteraction(const std::string& interactionId);
-    GovernanceResult checkAgentWellness();
-    GovernanceResult checkpointState();
-
-    // ===================== Foundation integration =====================
-    
     Envelope process(const std::string& input, const std::string& channel);
     AssessmentResult assess(const std::string& input);
     FoundationStatus getStatus();
 
 private:
-    // Actual pillar instances
-    std::unique_ptr<toi::TOIManager> m_toi;
     std::unique_ptr<otoi::OTOIManager> m_otoi;
     std::unique_ptr<rrt::RRTAdvocate> m_rrt;
     std::unique_ptr<sleepwalker::SleepwalkerProtocol> m_sleepwalker;
