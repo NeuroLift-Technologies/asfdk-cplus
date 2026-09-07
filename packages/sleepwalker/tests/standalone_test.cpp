@@ -22,9 +22,20 @@
 #if defined(__unix__) || defined(__unix) || defined(__APPLE__)
 #include <unistd.h>
 static std::string localProcessId() { return std::to_string(::getpid()); }
+#elif defined(_WIN32)
+#include <process.h>
+static std::string localProcessId() { return std::to_string(_getpid()); }
 #else
+#include <atomic>
 static std::string localProcessId() {
-    return std::to_string(static_cast<long>(std::rand()));
+    // Fallback for other non-POSIX platforms: combine a monotonic counter
+    // with the address of a static local to reduce collision probability
+    // across separate processes. Not cryptographically unique, but sufficient
+    // for test temp-directory suffixes.
+    static std::atomic<int> counter(0);
+    int n = counter.fetch_add(1, std::memory_order_relaxed);
+    return std::to_string(n) + "_" +
+           std::to_string(reinterpret_cast<uintptr_t>(this));
 }
 #endif
 #include "sleepwalker/StateDetector.h"

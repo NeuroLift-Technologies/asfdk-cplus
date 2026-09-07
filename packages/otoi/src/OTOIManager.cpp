@@ -536,9 +536,29 @@ std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const Otoi
         );
     }
 
+    // Determine which documents have recognizable $tier values. Documents
+    // without a valid tier are excluded from both conflict detection and
+    // resolution, keeping the two code paths consistent: detectConflicts
+    // already skips unknown-tier documents, so resolveDocuments must not
+    // silently assign them priority 0 and resolve them.
+    std::vector<nlohmann::json> tierKnownDocs;
+    for (const auto& doc : documents) {
+        if (doc.contains("$tier") && doc["$tier"].is_string()) {
+            std::string tierStr = doc["$tier"].get<std::string>();
+            if (tier_from_string(tierStr).has_value()) {
+                tierKnownDocs.push_back(doc);
+            }
+        }
+    }
+    if (tierKnownDocs.empty()) {
+        return std::unexpected<OtoiHonorError>(
+            OtoiHonorError("No documents with valid $tier values to resolve", {})
+        );
+    }
+
     // Detect same-tier conflicts before resolution
     OTOIValidator validator;
-    std::vector<PolicyConflict> conflicts = validator.detectConflicts(documents);
+    std::vector<PolicyConflict> conflicts = validator.detectConflicts(tierKnownDocs);
     policy.conflicts = conflicts;
 
     // Handle conflicts based on enforcement policy
@@ -549,11 +569,11 @@ std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const Otoi
     }
 
     // Resolve documents using tier precedence
-    policy.effective = resolveDocuments(documents, resolvedEnforcement);
+    policy.effective = resolveDocuments(tierKnownDocs, resolvedEnforcement);
 
     // Set tiers (unique, highest precedence first)
     std::set<Tier> tierSet;
-    for (const auto& doc : documents) {
+    for (const auto& doc : tierKnownDocs) {
         if (doc.contains("$tier") && doc["$tier"].is_string()) {
             auto tier = tier_from_string(doc["$tier"].get<std::string>());
             if (tier) tierSet.insert(*tier);
