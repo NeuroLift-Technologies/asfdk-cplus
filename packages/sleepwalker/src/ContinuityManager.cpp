@@ -67,11 +67,9 @@ std::optional<int> ContinuityManager::calculateDaysSince(const std::string& time
         return std::nullopt;
     }
 
-    // Skip optional fractional seconds
+    // Skip optional fractional seconds (saveSession writes %Y-%m-%dT%H:%M:%SZ without fractions)
     if (ss.peek() == '.') {
-        ss.ignore(std::numeric_limits<std::streamsize>::max(), 'T');
-        // Re-scan: if 'T' is the delimiter, the get_time above already consumed up to seconds
-        // Actually, let's try a different approach
+        ss.ignore(std::numeric_limits<std::streamsize>::max(), 'Z');
     }
 
     // Convert parsed time to time_t and compute delta

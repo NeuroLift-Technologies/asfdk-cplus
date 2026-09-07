@@ -13,7 +13,6 @@
 #include <string>
 #include <vector>
 #include <optional>
-#include <cmath>
 #include <nlohmann/json.hpp>
 
 namespace sleepwalker {

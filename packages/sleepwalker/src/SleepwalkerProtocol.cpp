@@ -8,6 +8,7 @@
 
 #include "SleepwalkerProtocol.h"
 #include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace sleepwalker {
 
@@ -21,13 +22,14 @@ SleepwalkerProtocol::SleepwalkerProtocol(const SleepwalkerProtocol::Options& opt
     , m_userToi(options.userToi)
     , m_privacyMode(options.privacyMode)
     , m_loggingEnabled(options.loggingEnabled) {
-    // Initialize spdlog if logging is enabled
+    // Initialize instance-level logger (no global state mutation per DECISIONS.md §7)
     if (m_loggingEnabled) {
-        spdlog::set_level(spdlog::level::info);
+        m_logger = spdlog::stdout_color_mt("sleepwalker");
+        m_logger->set_level(spdlog::level::info);
     }
 
     if (m_loggingEnabled) {
-        spdlog::info("Sleepwalker Protocol initialized");
+        m_logger->info("Sleepwalker Protocol initialized");
     }
 }
 
@@ -156,12 +158,10 @@ nlohmann::json SleepwalkerProtocol::getStatus() {
 }
 
 void SleepwalkerProtocol::reset() {
-    // In C++, the singleton pattern is managed by the integration layer.
     // This static method is provided for API parity with the reference.
     // The integration layer is responsible for resetting/recreating the instance.
-    if (spdlog::get_level() <= spdlog::level::info) {
-        spdlog::info("Sleepwalker Protocol reset");
-    }
+    // Note: This is NOT a singleton — each SleepwalkerProtocol instance manages
+    // its own state. This method clears any static/shared state if present.
 }
 
 bool SleepwalkerProtocol::isSwpActive() {
@@ -216,7 +216,7 @@ ResponseGuidance SleepwalkerProtocol::graduatedConsentOffer(ConsentLevel level) 
 
 void SleepwalkerProtocol::logObservation(const EmotionalState& state, bool intervention) {
     if (m_loggingEnabled) {
-        spdlog::info("SWP Observation - State: {}, Protective: {}, Intervention: {}",
+        m_logger->info("SWP Observation - State: {}, Protective: {}, Intervention: {}",
                      stateTypeToString(state.stateType),
                      state.protective ? "true" : "false",
                      intervention ? "true" : "false");
