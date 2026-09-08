@@ -1,7 +1,8 @@
 #pragma once
 
 #include "OTOITypes.h"
-#include <expected> // std::expected (C++23)
+// Use tl::expected as C++17/20 backport for std::expected
+#include <tl/expected.hpp>
 #include <atomic>
 #include <nlohmann/json.hpp>
 
@@ -35,15 +36,15 @@ public:
     OTOIValidator() = default;
 
     // Validate a parsed OtoiCharter
-    // Returns std::expected<void, OtoiValidationError>
+    // Returns tl::expected<void, OtoiValidationError>
     // On success: returns void
     // On failure: returns unexpected with validation issues
-    std::expected<void, OtoiValidationError> validate(const OtoiCharter& charter) const;
+    tl::expected<void, OtoiValidationError> validate(const OtoiCharter& charter) const;
 
     // Validate a raw JSON object as an .otoi charter
     // Throws OtoiParseError if input is not valid JSON object
-    // Returns std::expected<OtoiCharter, OtoiError> with validation issues if invalid
-    std::expected<OtoiCharter, OtoiError> parseAndValidate(const nlohmann::json& json) const;
+    // Returns tl::expected<OtoiCharter, OtoiError> with validation issues if invalid
+    tl::expected<OtoiCharter, OtoiError> parseAndValidate(const nlohmann::json& json) const;
 
     // Detect same-tier conflicts across .toi documents
     // Cross-tier disagreement is NOT a conflict — that is what tier precedence is for
@@ -86,8 +87,8 @@ public:
     OtoiCharter parseCharter(const nlohmann::json& json);
 
     // Non-throwing parse variant
-    // Returns std::expected<OtoiCharter, OtoiError>
-    std::expected<OtoiCharter, OtoiError> safeParseCharter(const nlohmann::json& json) const;
+    // Returns tl::expected<OtoiCharter, OtoiError>
+    tl::expected<OtoiCharter, OtoiError> safeParseCharter(const nlohmann::json& json) const;
 
     // Fold a charter and its .toi sources into one effective policy
     // Resolution delegates tier precedence to TOI layer's resolveToi
@@ -102,8 +103,8 @@ public:
     EffectivePolicy honor(const OtoiCharter& charter, const HonorOptions& options = {});
 
     // Non-throwing honor variant
-    // Returns std::expected<EffectivePolicy, OtoiHonorError>
-    std::expected<EffectivePolicy, OtoiHonorError> safeHonor(const OtoiCharter& charter, const HonorOptions& options = {}) const;
+    // Returns tl::expected<EffectivePolicy, OtoiHonorError>
+    tl::expected<EffectivePolicy, OtoiHonorError> safeHonor(const OtoiCharter& charter, const HonorOptions& options = {}) const;
 
     // Return the effective preferences a specific agent must honor
     // Under strict enforcement, an agent not declared in charter mesh is refused
@@ -144,13 +145,13 @@ private:
 // ============ Convenience Functions ============
 
 // Parse charter with automatic error conversion (non-throwing)
-inline std::expected<OtoiCharter, OtoiError> parseCharterSafe(const nlohmann::json& json) {
+inline tl::expected<OtoiCharter, OtoiError> parseCharterSafe(const nlohmann::json& json) {
     OTOIManager manager;
     return manager.safeParseCharter(json);
 }
 
 // Honor charter with automatic error conversion (non-throwing)
-inline std::expected<EffectivePolicy, OtoiHonorError> honorSafe(const OtoiCharter& charter, const HonorOptions& options = {}) {
+inline tl::expected<EffectivePolicy, OtoiHonorError> honorSafe(const OtoiCharter& charter, const HonorOptions& options = {}) {
     OTOIManager manager;
     return manager.safeHonor(charter, options);
 }
