@@ -10,7 +10,8 @@ ASFDK::ASFDK()
     : m_otoi(std::make_unique<otoi::OTOIManager>())
     , m_rrt(std::make_unique<rrt::RRTAdvocate>())
     , m_sleepwalker(std::make_unique<sleepwalker::SleepwalkerProtocol>())
-{}
+{
+}
 
 ASFDK::~ASFDK() = default;
 
@@ -42,7 +43,7 @@ otoi::OtoiCharter ASFDK::parseCharter(const nlohmann::json& json) {
     return m_otoi->parseCharter(json);
 }
 
-std::expected<otoi::OtoiCharter, otoi::OtoiError> ASFDK::safeParseCharter(const nlohmann::json& json) {
+tl::expected<otoi::OtoiCharter, otoi::OtoiError> ASFDK::safeParseCharter(const nlohmann::json& json) {
     return m_otoi->safeParseCharter(json);
 }
 

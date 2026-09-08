@@ -6,6 +6,7 @@
 #include <vector>
 
 // Include actual pillar headers
+#include "toi/TOITypes.h"
 #include "toi/TermsOfInteraction.h"
 #include "otoi/OTOIManager.h"
 #include "rrt/RRTAdvocate.h"
@@ -67,7 +68,7 @@ public:
     // ===================== OTOI surface (pass-through to otoi::OTOIManager) =====================
     
     otoi::OtoiCharter parseCharter(const nlohmann::json& json);
-    std::expected<otoi::OtoiCharter, otoi::OtoiError> safeParseCharter(const nlohmann::json& json);
+    tl::expected<otoi::OtoiCharter, otoi::OtoiError> safeParseCharter(const nlohmann::json& json);
     otoi::EffectivePolicy honor(const otoi::OtoiCharter& charter, const otoi::HonorOptions& options = {});
     nlohmann::json propagate(const otoi::EffectivePolicy& policy, const std::string& agentId);
 

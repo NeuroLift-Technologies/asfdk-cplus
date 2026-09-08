@@ -2520,6 +2520,10 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_INTERNAL_CATCH(exception) catch(exception)
 #else
     #include <cstdlib>
+    #undef strtoull
+    #undef strtoll
+    #undef strtol
+    #undef strtoul
     #define JSON_THROW(exception) std::abort()
     #define JSON_TRY if(true)
     #define JSON_CATCH(exception) if(false)
@@ -7380,6 +7384,11 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cstddef> // size_t
 #include <cstdio> // snprintf
 #include <cstdlib> // strtof, strtod, strtold, strtoll, strtoull
+// KILO_TEST_MARKER_7383
+#undef strtoull
+#undef strtoll
+#undef strtol
+#undef strtoul
 #include <initializer_list> // initializer_list
 #include <string> // char_traits, string
 #include <utility> // move
@@ -13812,6 +13821,10 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
 #include <cstdlib> // strtoull
+#undef strtoull
+#undef strtoll
+#undef strtol
+#undef strtoul
 #ifndef JSON_NO_IO
     #include <iosfwd> // ostream
 #endif  // JSON_NO_IO

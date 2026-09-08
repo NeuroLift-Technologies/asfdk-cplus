@@ -9,7 +9,7 @@ namespace otoi {
 
 // ============ OTOIValidator Implementation ============
 
-std::expected<void, OtoiValidationError> OTOIValidator::validate(const OtoiCharter& charter) const {
+tl::expected<void, OtoiValidationError> OTOIValidator::validate(const OtoiCharter& charter) const {
     std::vector<OtoiIssue> issues;
 
     // Validate $otoi version
@@ -103,7 +103,7 @@ std::expected<void, OtoiValidationError> OTOIValidator::validate(const OtoiChart
     issues.insert(issues.end(), sourceIssues.begin(), sourceIssues.end());
 
     if (!issues.empty()) {
-        return std::unexpected<OtoiValidationError>(
+        return tl::unexpected<OtoiValidationError>(
             OtoiValidationError("Charter validation failed", std::move(issues))
         );
     }
@@ -111,9 +111,9 @@ std::expected<void, OtoiValidationError> OTOIValidator::validate(const OtoiChart
     return {};
 }
 
-std::expected<OtoiCharter, OtoiError> OTOIValidator::parseAndValidate(const nlohmann::json& json) const {
+tl::expected<OtoiCharter, OtoiError> OTOIValidator::parseAndValidate(const nlohmann::json& json) const {
     if (!json.is_object()) {
-        return std::unexpected<OtoiParseError>("Charter must be a JSON object");
+        return tl::unexpected<OtoiParseError>("Charter must be a JSON object");
     }
 
     OtoiCharter charter;
@@ -225,7 +225,7 @@ std::expected<OtoiCharter, OtoiError> OTOIValidator::parseAndValidate(const nloh
     // Validate the parsed charter
     auto validation = validate(charter);
     if (!validation.has_value()) {
-        return std::unexpected<OtoiError>(
+        return tl::unexpected<OtoiError>(
             OtoiValidationError(validation.error().message, std::move(validation.error().issues))
         );
     }
@@ -474,7 +474,7 @@ OtoiCharter OTOIManager::parseCharter(const nlohmann::json& json) {
     return *result;
 }
 
-std::expected<OtoiCharter, OtoiError> OTOIManager::safeParseCharter(const nlohmann::json& json) const {
+tl::expected<OtoiCharter, OtoiError> OTOIManager::safeParseCharter(const nlohmann::json& json) const {
     OTOIValidator validator;
     return validator.parseAndValidate(json);
 }
@@ -487,12 +487,12 @@ EffectivePolicy OTOIManager::honor(const OtoiCharter& charter, const HonorOption
     return *result;
 }
 
-std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const OtoiCharter& charter, const HonorOptions& options) const {
+tl::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const OtoiCharter& charter, const HonorOptions& options) const {
     EffectivePolicy policy;
 
     // Check if we have sources to resolve
     if (charter.toi_sources.empty() && (!options.documents || options.documents->empty())) {
-        return std::unexpected<OtoiHonorError>(
+        return tl::unexpected<OtoiHonorError>(
             OtoiHonorError("No .toi sources to resolve", {})
         );
     }
@@ -524,7 +524,7 @@ std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const Otoi
             }
         } catch (const std::exception& e) {
             if (resolvedEnforcement.on_unsupported == UnsupportedStrategy::Reject) {
-                return std::unexpected<OtoiHonorError>(
+                return tl::unexpected<OtoiHonorError>(
                     OtoiHonorError(std::string("Failed to load source: ") + e.what(), {})
                 );
             }
@@ -542,7 +542,7 @@ std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const Otoi
     }
 
     if (documents.empty()) {
-        return std::unexpected<OtoiHonorError>(
+        return tl::unexpected<OtoiHonorError>(
             OtoiHonorError("No valid .toi documents to resolve", {})
         );
     }
@@ -554,7 +554,7 @@ std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const Otoi
 
     // Handle conflicts based on enforcement policy
     if (!conflicts.empty() && resolvedEnforcement.on_conflict == ConflictStrategy::Reject) {
-        return std::unexpected<OtoiHonorError>(
+        return tl::unexpected<OtoiHonorError>(
             OtoiHonorError("Same-tier conflicts detected under reject strategy", conflicts)
         );
     }
