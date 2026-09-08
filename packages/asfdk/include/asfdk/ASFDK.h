@@ -7,6 +7,7 @@
 
 // Include actual pillar headers (TOI public API is the free functions in
 // TermsOfInteraction.h — TOIManager is an internal implementation detail).
+#include "toi/TOITypes.h"
 #include "toi/TermsOfInteraction.h"
 #include "otoi/OTOIManager.h"
 #include "rrt/RRTAdvocate.h"
@@ -24,6 +25,8 @@ namespace asfdk {
 struct Envelope {
     bool trusted;
     std::string channel;
+    bool flagged = false;
+    std::string flagReason;
     std::string consentLevel;
     nlohmann::json payload;
 };
@@ -39,6 +42,7 @@ struct FoundationStatus {
     bool otoi_active;
     bool rrt_active;
     bool swp_active;
+    std::string otoi_mode;
     std::string overall;
 
     nlohmann::json toJson() const;

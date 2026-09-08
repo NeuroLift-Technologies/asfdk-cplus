@@ -7,12 +7,12 @@
 
 namespace asfdk {
 
-ASFDK::ASFDK() {
-    // Initialize all four pillars
-    m_toi = std::make_unique<toi::TOIManager>();
-    m_otoi = std::make_unique<otoi::OTOIManager>();
-    m_rrt = std::make_unique<rrt::RRTAdvocate>();
-    m_sleepwalker = std::make_unique<sleepwalker::SleepwalkerProtocol>();
+ASFDK::ASFDK()
+    : m_toi(std::make_unique<toi::TOIManager>())
+    , m_otoi(std::make_unique<otoi::OTOIManager>())
+    , m_rrt(std::make_unique<rrt::RRTAdvocate>())
+    , m_sleepwalker(std::make_unique<sleepwalker::SleepwalkerProtocol>())
+{
 }
 
 ASFDK::~ASFDK() = default;
