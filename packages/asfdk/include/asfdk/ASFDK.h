@@ -92,7 +92,6 @@ public:
     FoundationStatus getStatus();
 
 private:
-    std::unique_ptr<toi::TOIManager> m_toi;
     std::unique_ptr<otoi::OTOIManager> m_otoi;
     std::unique_ptr<rrt::RRTAdvocate> m_rrt;
     std::unique_ptr<sleepwalker::SleepwalkerProtocol> m_sleepwalker;

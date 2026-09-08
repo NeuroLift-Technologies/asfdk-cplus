@@ -9,7 +9,7 @@ namespace otoi {
 
 // ============ OTOIValidator Implementation ============
 
-std::expected<void, OtoiValidationError> OTOIValidator::validate(const OtoiCharter& charter) const {
+tl::expected<void, OtoiValidationError> OTOIValidator::validate(const OtoiCharter& charter) const {
     std::vector<OtoiIssue> issues;
 
     // Validate $otoi version
@@ -111,7 +111,7 @@ std::expected<void, OtoiValidationError> OTOIValidator::validate(const OtoiChart
     return {};
 }
 
-std::expected<OtoiCharter, OtoiError> OTOIValidator::parseAndValidate(const nlohmann::json& json) const {
+tl::expected<OtoiCharter, OtoiError> OTOIValidator::parseAndValidate(const nlohmann::json& json) const {
     if (!json.is_object()) {
         return tl::unexpected<OtoiParseError>("Charter must be a JSON object");
     }
@@ -474,7 +474,7 @@ OtoiCharter OTOIManager::parseCharter(const nlohmann::json& json) {
     return *result;
 }
 
-std::expected<OtoiCharter, OtoiError> OTOIManager::safeParseCharter(const nlohmann::json& json) const {
+tl::expected<OtoiCharter, OtoiError> OTOIManager::safeParseCharter(const nlohmann::json& json) const {
     OTOIValidator validator;
     return validator.parseAndValidate(json);
 }
@@ -487,7 +487,7 @@ EffectivePolicy OTOIManager::honor(const OtoiCharter& charter, const HonorOption
     return *result;
 }
 
-std::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const OtoiCharter& charter, const HonorOptions& options) const {
+tl::expected<EffectivePolicy, OtoiHonorError> OTOIManager::safeHonor(const OtoiCharter& charter, const HonorOptions& options) const {
     EffectivePolicy policy;
 
     // Check if we have sources to resolve
